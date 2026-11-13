@@ -75,27 +75,39 @@
 </script>
 
 {#if isSessionCreated}
-    <div class="mirroring-status">
+    <div
+        class="mirroring-status"
+        class:mirroring-status--live={isMirroringConnected}
+    >
         {#if isMirroringConnected}
-            <p>
+            <p class="mirroring-status__text">
+                <span class="mirroring-status__live-dot" aria-hidden="true" />
                 {_("mirroringPopupMirroringTo", device.friendlyName)}
             </p>
-            <button on:click={() => window.close()}>
+            <button
+                class="mirroring-status__stop"
+                on:click={() => window.close()}
+            >
                 {_("mirroringPopupStopMirroring")}
             </button>
         {:else}
-            <p>
+            <p class="mirroring-status__text">
                 {_("mirroringPopupConnectedTo", device.friendlyName)}
             </p>
-            <button on:click={requestDisplayMedia} class="button">
+            <button
+                on:click={requestDisplayMedia}
+                class="button mirroring-status__primary"
+            >
                 {_("mirroringPopupChooseSource")}
             </button>
         {/if}
     </div>
 {:else}
-    <p>
-        <LoadingIndicator
-            >{_("mirroringPopupWaitingForConnection")}</LoadingIndicator
-        >
-    </p>
+    <div class="mirroring-status">
+        <p class="mirroring-status__text">
+            <LoadingIndicator
+                >{_("mirroringPopupWaitingForConnection")}</LoadingIndicator
+            >
+        </p>
+    </div>
 {/if}

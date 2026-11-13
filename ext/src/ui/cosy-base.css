@@ -1,0 +1,114 @@
+/*
+ * Shared "evening living room" base for all fx_cast pages: colour
+ * tokens (light + dusk), rounded type, pill buttons, focus rings and
+ * reduced motion. Page themes build on these tokens.
+ */
+
+:root {
+    --cosy-bg: #eef0e8;
+    --cosy-card: #fafbf6;
+    --cosy-card-border: #dfe2d6;
+    --cosy-ink: #2e3328;
+    --cosy-muted: #6e7465;
+    --cosy-lamp: #e8a33d;
+    --cosy-lamp-ink: #3a2a0c;
+    --cosy-lamp-soft: rgba(232, 163, 61, 0.16);
+    --cosy-lamp-glow: rgba(232, 163, 61, 0.38);
+    --cosy-soft-button: #e6e9de;
+    --cosy-soft-button-hover: #dce0d2;
+    --cosy-danger-soft: #f6e1d9;
+    --cosy-danger-ink: #8a3a1f;
+    --cosy-focus: #8fa37f;
+
+    --cosy-radius-card: 16px;
+    --cosy-radius-panel: 12px;
+    --cosy-ease: cubic-bezier(0.22, 0.8, 0.3, 1);
+
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --cosy-bg: #1c211e;
+        --cosy-card: #262d28;
+        --cosy-card-border: #323a34;
+        --cosy-ink: #ecebe1;
+        --cosy-muted: #9aa196;
+        --cosy-lamp: #f2b95a;
+        --cosy-lamp-ink: #2b1d05;
+        --cosy-lamp-soft: rgba(242, 185, 90, 0.12);
+        --cosy-lamp-glow: rgba(242, 185, 90, 0.3);
+        --cosy-soft-button: #313a33;
+        --cosy-soft-button-hover: #3a443c;
+        --cosy-danger-soft: #4a2d24;
+        --cosy-danger-ink: #f3c2ae;
+        --cosy-focus: #a9bd98;
+
+        color-scheme: dark;
+    }
+}
+
+/* ---------- Base ---------- */
+
+body {
+    --font-size: 13px;
+    background-color: var(--cosy-bg);
+    color: var(--cosy-ink);
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    font-size: var(--font-size);
+    line-height: 1.4;
+}
+
+button,
+select {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--cosy-focus);
+    outline-offset: 2px;
+}
+
+/* Buttons: soft pills by default */
+button {
+    background-color: var(--cosy-soft-button);
+    border: none;
+    border-radius: 999px;
+    color: var(--cosy-ink);
+    cursor: pointer;
+    min-height: 30px;
+    padding: 0 14px;
+    transition: background-color 160ms var(--cosy-ease),
+        transform 120ms var(--cosy-ease), box-shadow 160ms var(--cosy-ease);
+}
+button:hover:not(:disabled) {
+    background-color: var(--cosy-soft-button-hover);
+}
+button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+button.ghost {
+    background-color: transparent;
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0;
+}
+button.ghost:hover:not(:disabled) {
+    background-color: var(--cosy-soft-button);
+}
+
+/* ---------- Respect reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

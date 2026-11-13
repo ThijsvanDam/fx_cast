@@ -1,0 +1,185 @@
+/*
+ * Options page in the "evening living room" theme.
+ * Builds on ../cosy-base.css tokens; loaded after index.css.
+ */
+
+body {
+    background-color: var(--cosy-bg) !important;
+    color: var(--cosy-ink) !important;
+    padding: 20px 16px 24px;
+}
+
+a {
+    color: var(--cosy-ink);
+    text-decoration-color: var(--cosy-lamp);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+a:hover,
+a:hover:active {
+    color: var(--cosy-ink);
+    text-decoration-color: var(--cosy-ink);
+}
+
+/* ---------- Sections become soft cards ---------- */
+
+.form > .category {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: var(--cosy-radius-card);
+    margin-block-end: 12px;
+    padding: 16px 18px;
+}
+
+.category__name > h2 {
+    font-size: 16px;
+    font-weight: 650;
+}
+.category__description {
+    color: var(--cosy-muted);
+    line-height: 1.5;
+}
+.category > hr,
+.whitelist hr {
+    border-top-color: var(--cosy-card-border);
+}
+.category > details > summary {
+    color: var(--cosy-muted);
+    cursor: pointer;
+    font-weight: 600;
+}
+.category > details > summary:hover {
+    color: var(--cosy-ink);
+}
+
+.option__description,
+.option__recommended {
+    color: var(--cosy-muted);
+}
+
+/* ---------- Form controls ---------- */
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--cosy-lamp);
+    height: 16px;
+    width: 16px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="url"],
+input:not([type]),
+select,
+textarea {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: 10px;
+    color: var(--cosy-ink);
+    font: inherit;
+    min-height: 30px;
+    padding: 0 10px;
+    transition: border-color 160ms var(--cosy-ease),
+        box-shadow 160ms var(--cosy-ease);
+}
+textarea {
+    padding: 8px 10px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    border-color: var(--cosy-lamp);
+    box-shadow: 0 0 0 3px var(--cosy-lamp-soft);
+    outline: none;
+}
+
+/* ---------- Save / reset footer ---------- */
+
+.form__footer {
+    background-color: var(--cosy-bg);
+    border-top: none;
+    padding-block: 12px 0;
+}
+.form__buttons button[type="submit"],
+.form__buttons .button--primary {
+    background-color: var(--cosy-lamp);
+    color: var(--cosy-lamp-ink);
+    font-weight: 600;
+}
+.form__status-line {
+    color: var(--cosy-muted);
+}
+
+/* ---------- Bridge: lamp on when found ---------- */
+
+.bridge {
+    border-bottom: none;
+    margin-bottom: 12px;
+    padding-bottom: 0;
+}
+
+.bridge__info {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: var(--cosy-radius-panel);
+    padding: 12px 14px;
+    transition: box-shadow 600ms var(--cosy-ease),
+        border-color 600ms var(--cosy-ease);
+}
+.bridge__info--found {
+    background-image: radial-gradient(
+        120% 140% at 0% 0%,
+        var(--cosy-lamp-soft),
+        transparent 60%
+    );
+    border-color: var(--cosy-lamp-glow);
+    box-shadow: 0 6px 22px -12px var(--cosy-lamp-glow);
+}
+.bridge__info--error {
+    background-color: var(--cosy-danger-soft);
+    border-color: transparent;
+}
+.bridge__info--found .bridge__status,
+.bridge__info--error .bridge__status {
+    color: var(--cosy-ink);
+}
+.bridge__info--error .bridge__status-title,
+.bridge__info--error .bridge__status-text {
+    color: var(--cosy-danger-ink);
+}
+.bridge__status-title {
+    font-size: 15px;
+    font-weight: 650;
+}
+.bridge__status-text,
+.bridge__stats th {
+    color: var(--cosy-muted);
+}
+
+/* ---------- Whitelist ---------- */
+
+.whitelist__items {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: var(--cosy-radius-panel);
+    overflow: hidden;
+}
+.whitelist__item {
+    transition: background-color 160ms var(--cosy-ease);
+}
+.whitelist__item:nth-child(even) {
+    background-color: var(--cosy-bg);
+}
+.whitelist__item--selected,
+.whitelist__item--selected:nth-child(even) {
+    background-color: var(--cosy-lamp-soft);
+}
+.whitelist__known-app,
+.whitelist__pattern {
+    color: var(--cosy-muted);
+}
+.whitelist__expanded {
+    background-color: var(--cosy-bg);
+    border-radius: 10px;
+}

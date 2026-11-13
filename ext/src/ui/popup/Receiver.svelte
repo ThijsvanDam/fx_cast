@@ -120,14 +120,15 @@
     $: if (!device.mediaStatus) {
         isExpanded = false;
     } else if (
-        // If app is running
+        // If something is playing (any sender, not only this browser)
         application &&
+        !application.isIdleScreen &&
         // And user hasn't manually changed the expanded state
         !isExpandedUserModified &&
         // And auto-expansion is enabled
         opts?.receiverSelectorExpandActive
     ) {
-        isExpanded = connectedSessionIds.includes(application.transportId);
+        isExpanded = true;
     }
 
     /** Whether a session request is in progress for this receiver.. */

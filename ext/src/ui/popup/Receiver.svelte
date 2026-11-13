@@ -436,7 +436,9 @@
         >
             {_("popupStopButtonTitle")}
         </button>
-    {:else if isAnyMediaTypeAvailable}
+    {/if}
+    <!-- Casting to a busy receiver replaces what it is playing -->
+    {#if isAnyMediaTypeAvailable}
         <button
             class="receiver__cast-button"
             disabled={isConnecting || isAnyConnecting || !isMediaTypeAvailable}

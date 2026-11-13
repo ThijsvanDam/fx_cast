@@ -55,6 +55,10 @@
         "message": "this media",
         "description": "Receiver selector media type <option> text for media casting."
     },
+    "popupMediaTypeAudioOnly": {
+        "message": "Audio only",
+        "description": "Receiver selector media type <option> text for playing only the audio of a YouTube video."
+    },
     "popupMediaTypeScreen": {
         "message": "Screen",
         "description": "Receiver selector media type <option> text for screen."

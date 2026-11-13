@@ -49,6 +49,11 @@
     /** Whether casting to a device been initiated from this selector. */
     let isConnecting = false;
 
+    /** Error to show in the selector (e.g. audio-only lookup failed). */
+    let errorMessage: Nullable<string> = null;
+    // Clear the error when the user picks another media type
+    $: mediaType, (errorMessage = null);
+
     /** Extension options */
     let opts: Nullable<Options> = null;
 
@@ -92,6 +97,12 @@
                 return hasRequiredCapabilities(
                     device,
                     appInfo?.sessionRequest?.capabilities
+                );
+
+            /** Audio-only casting needs audio output capability. */
+            case ReceiverSelectorMediaType.AudioOnly:
+                return !!(
+                    device.capabilities & ReceiverDeviceCapabilities.AUDIO_OUT
                 );
 
             /** Mirroring requires video output capability. */
@@ -169,6 +180,11 @@
             case "popup:init":
                 appInfo = message.data.appInfo;
                 pageInfo = message.data.pageInfo;
+                break;
+
+            case "popup:error":
+                errorMessage = message.data;
+                isConnecting = false;
                 break;
 
             case "popup:update": {
@@ -296,6 +312,7 @@
 
     function onReceiverCast(device: ReceiverDevice) {
         isConnecting = true;
+        errorMessage = null;
 
         port?.postMessage({
             subject: "main:receiverSelected",
@@ -360,6 +377,12 @@
                     {knownApp?.name ?? _("popupMediaTypeApp")}
                 </option>
 
+                {#if availableMediaTypes & ReceiverSelectorMediaType.AudioOnly}
+                    <option value={ReceiverSelectorMediaType.AudioOnly}>
+                        {_("popupMediaTypeAudioOnly")}
+                    </option>
+                {/if}
+
                 {#if opts?.mirroringEnabled}
                     <option
                         value={ReceiverSelectorMediaType.Screen}
@@ -377,6 +400,10 @@
             {_("popupMediaSelectToLabel")}
         </div>
     </div>
+{/if}
+
+{#if errorMessage}
+    <div class="banner banner--warn">{errorMessage}</div>
 {/if}
 
 <ul class="receiver-list">

@@ -102,6 +102,8 @@
 
     /** Whether a session request is in progress for this receiver.. */
     let isConnecting = false;
+    // Reset when the selector stops connecting (e.g. after an error)
+    $: if (!isAnyConnecting) isConnecting = false;
 
     function sendReceiverMessage(
         partialMessage: DistributiveOmit<SenderMessage, "requestId">

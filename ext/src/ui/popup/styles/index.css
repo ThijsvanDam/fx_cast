@@ -176,6 +176,36 @@ body {
     width: 100%;
 }
 
+.receiver__queue {
+    width: 100%;
+}
+.receiver__queue-heading {
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-block-end: 0.25em;
+}
+.receiver__queue-list {
+    list-style: none;
+    margin: 0;
+    padding-inline-start: 0.5em;
+}
+.receiver__queue-item {
+    align-items: center;
+    display: flex;
+    gap: 0.5em;
+}
+.receiver__queue-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.receiver__queue-item::before {
+    content: counter(list-item) ".";
+    color: var(--secondary-color);
+}
+
 .media {
     display: flex;
     flex-direction: column;

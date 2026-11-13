@@ -1161,6 +1161,16 @@ function createSelector() {
                     mediaSessionId
                 ) as unknown as SenderMediaMessage
             );
+
+            // Audio continues on the speaker; pause it in the tab
+            const tabId = selector.pageInfo?.tabId;
+            if (tabId !== undefined) {
+                await browser.tabs.executeScript(tabId, {
+                    code: 'document.querySelectorAll("video").forEach(video => video.pause());',
+                    frameId: 0
+                });
+            }
+
             selector.close();
         } catch (err) {
             logger.error("Add to queue failed", err);

@@ -17,7 +17,7 @@
     } from "../../cast/sdk/types";
 
     import LoadingIndicator from "../LoadingIndicator.svelte";
-    import { canQueueAudio } from "../../lib/audioQueue";
+    import { canQueueAudio, getUpNext } from "../../lib/audioQueue";
     import ReceiverMedia from "./ReceiverMedia.svelte";
 
     const _ = browser.i18n.getMessage;
@@ -50,6 +50,9 @@
     $: isBusy = !!application && !application.isIdleScreen;
     /** Title of the media currently playing (if known). */
     $: mediaTitle = device.mediaStatus?.media?.metadata?.title;
+    /** Upcoming queue items (Default Media Receiver only). */
+    $: upNext =
+        application?.appId === "CC1AD845" ? getUpNext(device.mediaStatus) : [];
     $: canQueue = canQueueAudio({
         isAudioOnly,
         appId: application?.appId,
@@ -540,5 +543,33 @@
                 on:volumeChanged={ev => handleVolumeChange(ev.detail)}
             />
         </div>
+
+        {#if upNext.length}
+            <div class="receiver__queue">
+                <div class="receiver__queue-heading">
+                    {_("popupQueueUpNext")}
+                </div>
+                <ol class="receiver__queue-list">
+                    {#each upNext as item (item.itemId)}
+                        <li class="receiver__queue-item">
+                            <span class="receiver__queue-title">{item.title}</span>
+                            <button
+                                type="button"
+                                class="receiver__queue-remove ghost"
+                                title={_("popupQueueRemove")}
+                                aria-label={_("popupQueueRemove")}
+                                on:click={() =>
+                                    sendMediaMessage({
+                                        type: "QUEUE_REMOVE",
+                                        itemIds: [item.itemId]
+                                    })}
+                            >
+                                <img src="icons/remove.svg" alt="" width="16" height="16" />
+                            </button>
+                        </li>
+                    {/each}
+                </ol>
+            </div>
+        {/if}
     {/if}
 </li>

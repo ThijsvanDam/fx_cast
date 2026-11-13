@@ -55,6 +55,14 @@
         "message": "this media",
         "description": "Receiver selector media type <option> text for media casting."
     },
+    "popupQueueUpNext": {
+        "message": "Up next",
+        "description": "Heading of the receiver's upcoming queue items."
+    },
+    "popupQueueRemove": {
+        "message": "Remove from queue",
+        "description": "Button title/label for removing an item from the receiver's queue."
+    },
     "popupReplaceButtonTitle": {
         "message": "Replace",
         "description": "Receiver button that casts over whatever the receiver is currently playing."

@@ -201,6 +201,23 @@ type MessageDefinitions = {
     "main:youTubeAudioResolved": ResolvedAudio;
     /** Sent from the bridge when resolving the audio stream failed. */
     "main:youTubeAudioError": string;
+
+    /**
+     * Queue command for the YouTube app on a receiver (Lounge API).
+     * Replies with what fx_cast has queued there, or an error.
+     */
+    "bridge:youtubeQueue": {
+        deviceId: string;
+        host: string;
+        action: "add" | "playNext" | "remove";
+        videoId: string;
+        title: string;
+    };
+    "main:youtubeQueueUpdated": {
+        deviceId: string;
+        items: { videoId: string; title: string }[];
+    };
+    "main:youtubeQueueError": { deviceId: string; message: string };
 };
 
 interface MessageBase<K extends keyof MessageDefinitions> {

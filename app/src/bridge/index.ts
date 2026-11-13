@@ -6,6 +6,10 @@ import Remote from "./components/cast/remote";
 
 import { startMediaServer, stopMediaServer } from "./components/mediaServer";
 import { resolveYouTubeAudio } from "./components/youtube";
+import { YouTubeLounge } from "./components/youtube/lounge";
+
+/** Remembers fx_cast's YouTube queue additions for this bridge's life. */
+const youtubeLounge = new YouTubeLounge();
 
 import { applicationVersion } from "../../config.json";
 
@@ -118,6 +122,25 @@ messaging.on("message", (message: Message) => {
         }
         case "bridge:stopMediaServer": {
             stopMediaServer();
+            break;
+        }
+
+        case "bridge:youtubeQueue": {
+            const { deviceId } = message.data;
+            youtubeLounge
+                .queueCommand(message.data)
+                .then(items => {
+                    messaging.sendMessage({
+                        subject: "main:youtubeQueueUpdated",
+                        data: { deviceId, items }
+                    });
+                })
+                .catch((err: Error) => {
+                    messaging.sendMessage({
+                        subject: "main:youtubeQueueError",
+                        data: { deviceId, message: err.message }
+                    });
+                });
             break;
         }
 

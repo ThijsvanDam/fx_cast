@@ -5,7 +5,7 @@ import {
     parseBindResponse,
     buildCommandBody,
     LoungeQueueMemory
-} from "../src/bridge/components/youtube/loungeHelpers.ts";
+} from "../src/bridge/components/youtube/lounge.ts";
 
 const DEVICE_ID = "tv-1";
 const LIST_ID = "RQabc";

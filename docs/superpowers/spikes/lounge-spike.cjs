@@ -1,5 +1,5 @@
 // THROWAWAY SPIKE: YouTube Lounge API against a Cast device running the YouTube app.
-// Usage: node lounge-spike.cjs <host> <path-to-castv2> [testVideoId]
+// Usage: node lounge-spike.cjs <host> <path-to-castv2> [testVideoId] [keep|remove]
 // Prints the app/screen info, the lounge session events (from the bind reply),
 // then (if testVideoId) addVideo -> events -> removeVideo -> events.
 const { Client } = require(process.argv[3]);
@@ -112,9 +112,13 @@ async function command(action, params) {
 
     if (!testVideoId) return;
 
-    await command("addVideo", { videoId: testVideoId });
+    if (process.argv[5] !== "remove") {
+        await command("addVideo", { videoId: testVideoId });
+    }
     b = await bind();
     printEvents("after addVideo", b.events);
+
+    if (process.argv[5] === "keep") return;
 
     await command("removeVideo", { videoId: testVideoId });
     b = await bind();

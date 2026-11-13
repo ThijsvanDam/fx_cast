@@ -24,6 +24,9 @@
         volumeChanged: Partial<Volume>;
     }>();
 
+    /** Seek step, like YouTube's 10-second skip. */
+    const SEEK_SECONDS = 10;
+
     export let status: MediaStatus;
     export let device: ReceiverDevice;
     export let textTracks: Track[] = [];
@@ -260,12 +263,29 @@
             {/if}
             {#if status.supportedMediaCommands & _MediaCommand.SEEK}
                 <button
-                    class="media__backward-button ghost"
-                    title={_("popupMediaSeekBackward")}
+                    class="media__backward-button media__seek-icon-button ghost"
+                    title={_("popupMediaSeekBackward", String(SEEK_SECONDS))}
+                    aria-label={_("popupMediaSeekBackward", String(SEEK_SECONDS))}
                     disabled={status.playerState === PlayerState.IDLE}
                     on:click={() =>
-                        dispatch("seek", { position: currentTime - 5 })}
-                />
+                        dispatch("seek", {
+                            position: Math.max(0, currentTime - SEEK_SECONDS)
+                        })}
+                >
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                        <g transform="translate(24 0) scale(-1 1)">
+                            <path
+                                d="M12 4.5A7.5 7.5 0 1 1 5.5 8.25"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+                            <path d="M11 1.75 14.75 4.5 11 7.25Z" fill="currentColor" />
+                        </g>
+                        <text x="12" y="15.4" text-anchor="middle">{SEEK_SECONDS}</text>
+                    </svg>
+                </button>
             {/if}
 
             {#if status.supportedMediaCommands & _MediaCommand.PAUSE}
@@ -286,12 +306,27 @@
 
             {#if status.supportedMediaCommands & _MediaCommand.SEEK}
                 <button
-                    class="media__forward-button ghost"
+                    class="media__forward-button media__seek-icon-button ghost"
                     disabled={status.playerState === PlayerState.IDLE}
-                    title={_("popupMediaSeekForward")}
+                    title={_("popupMediaSeekForward", String(SEEK_SECONDS))}
+                    aria-label={_("popupMediaSeekForward", String(SEEK_SECONDS))}
                     on:click={() =>
-                        dispatch("seek", { position: currentTime + 5 })}
-                />
+                        dispatch("seek", { position: currentTime + SEEK_SECONDS })}
+                >
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                        <g>
+                            <path
+                                d="M12 4.5A7.5 7.5 0 1 1 5.5 8.25"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+                            <path d="M11 1.75 14.75 4.5 11 7.25Z" fill="currentColor" />
+                        </g>
+                        <text x="12" y="15.4" text-anchor="middle">{SEEK_SECONDS}</text>
+                    </svg>
+                </button>
             {/if}
             {#if status.supportedMediaCommands & _MediaCommand.QUEUE_NEXT}
                 <button

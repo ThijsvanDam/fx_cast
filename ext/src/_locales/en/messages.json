@@ -163,11 +163,11 @@
         "description": "Media controls pause button title."
     },
     "popupMediaSkipPrevious": {
-        "message": "Skip previous",
+        "message": "Back to previous",
         "description": "Media controls skip previous button title."
     },
     "popupMediaSkipNext": {
-        "message": "Skip next",
+        "message": "Skip to next",
         "description": "Media controls skip next button title."
     },
     "popupMediaSeek": {
@@ -175,11 +175,11 @@
         "description": "Media controls seek bar accessibility label."
     },
     "popupMediaSeekBackward": {
-        "message": "Seek backwards",
+        "message": "Back $1 seconds",
         "description": "Media controls seek backward button title."
     },
     "popupMediaSeekForward": {
-        "message": "Seek forwards",
+        "message": "Forward $1 seconds",
         "description": "Media controls seek forward button title."
     },
     "popupMediaSubtitlesCaptions": {

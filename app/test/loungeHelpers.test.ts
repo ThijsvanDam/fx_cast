@@ -87,3 +87,10 @@ test("memory is kept per device", () => {
     assert.deepEqual(memory.get(DEVICE_ID), []);
     assert.deepEqual(memory.get("tv-2"), [happyItem("b", "B")]);
 });
+
+test("no listId (no queue) clears what fx_cast added before", () => {
+    const memory = new LoungeQueueMemory();
+    memory.apply(DEVICE_ID, LIST_ID, "add", happyItem("a", "A"));
+
+    assert.deepEqual(memory.apply(DEVICE_ID, undefined, "add", happyItem("b", "B")), [happyItem("b", "B")]);
+});

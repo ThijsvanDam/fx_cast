@@ -134,6 +134,8 @@
     let isConnecting = false;
     /** Whether an add-to-queue request is in progress. */
     let isQueueing = false;
+    /** Which YouTube queue button is loading. */
+    let youtubeQueueAction: "add" | "playNext" | null = null;
     // Reset when the selector stops connecting (e.g. after an error)
     $: if (!isAnyConnecting) {
         isConnecting = false;
@@ -505,10 +507,15 @@
                     disabled={isAnyConnecting}
                     on:click={() => {
                         isQueueing = true;
+                        youtubeQueueAction = "add";
                         dispatch("youtubeQueue", { device, action: "add" });
                     }}
                 >
-                    <img src="icons/queue.svg" alt="" width="16" height="16" />
+                    {#if isQueueing && youtubeQueueAction === "add"}
+                        <LoadingIndicator />
+                    {:else}
+                        <img src="icons/queue.svg" alt="" width="16" height="16" />
+                    {/if}
                     {_("popupQueueButtonTitle")}
                 </button>
                 <button
@@ -516,10 +523,15 @@
                     disabled={isAnyConnecting}
                     on:click={() => {
                         isQueueing = true;
+                        youtubeQueueAction = "playNext";
                         dispatch("youtubeQueue", { device, action: "playNext" });
                     }}
                 >
-                    <img src="icons/play-next.svg" alt="" width="16" height="16" />
+                    {#if isQueueing && youtubeQueueAction === "playNext"}
+                        <LoadingIndicator />
+                    {:else}
+                        <img src="icons/play-next.svg" alt="" width="16" height="16" />
+                    {/if}
                     {_("popupPlayNextButtonTitle")}
                 </button>
             {/if}

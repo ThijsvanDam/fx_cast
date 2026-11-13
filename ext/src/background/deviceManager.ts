@@ -125,15 +125,20 @@ export default new (class extends TypedEventTarget<EventMap> {
             return Promise.reject(new Error("Device is not available"));
         }
 
+        // Replies carry no request ID, so one request per device at a time
+        if (this.youtubeQueueRequests.has(deviceId)) {
+            return Promise.reject(
+                new Error("Still working on the previous YouTube request")
+            );
+        }
+
         return new Promise((resolve, reject) => {
+            // Longer than the bridge's worst case (screen ID + 3 requests)
             const timeoutId = setTimeout(() => {
                 this.youtubeQueueRequests.delete(deviceId);
                 reject(new Error("YouTube didn't respond in time"));
-            }, 45000);
+            }, 70000);
 
-            this.youtubeQueueRequests.get(deviceId)?.reject(
-                new Error("Replaced by a newer request")
-            );
             this.youtubeQueueRequests.set(deviceId, {
                 resolve: () => {
                     clearTimeout(timeoutId);
@@ -178,7 +183,13 @@ export default new (class extends TypedEventTarget<EventMap> {
             case "main:deviceUp": {
                 const { deviceId, deviceInfo } = message.data;
 
-                this.receiverDevices.set(deviceId, deviceInfo);
+                // Keep what fx_cast queued on YouTube across rediscovery
+                const knownQueue =
+                    this.receiverDevices.get(deviceId)?.youtubeQueue;
+                this.receiverDevices.set(deviceId, {
+                    ...deviceInfo,
+                    ...(knownQueue ? { youtubeQueue: knownQueue } : {})
+                });
 
                 // Sort devices by friendly name
                 this.receiverDevices = new Map(

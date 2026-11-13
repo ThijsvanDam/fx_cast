@@ -109,3 +109,60 @@ test("YouTube not running: error and no HTTP calls", async () => {
     );
     assert.equal(calls.length, 0);
 });
+
+test("a rejected token is dropped and the command retried with a fresh one", async () => {
+    // Given
+    const calls: string[] = [];
+    let tokenRequests = 0;
+    let failNextBind = false;
+    const post: PostFn = async (url) => {
+        calls.push(url);
+        if (url.includes("get_lounge_token_batch")) {
+            tokenRequests++;
+            return {
+                status: 200,
+                text: JSON.stringify({
+                    screens: [{ screenId: SCREEN_ID, loungeToken: `token-${tokenRequests}`, expiration: HOUR_MS }]
+                })
+            };
+        }
+        if (url.includes("SID=")) return { status: 200, text: "" };
+        if (failNextBind) {
+            failNextBind = false;
+            return { status: 401, text: "" };
+        }
+        return { status: 200, text: BIND_TEXT };
+    };
+    const lounge = happyLounge(post);
+    const command = { deviceId: DEVICE_ID, host: HOST, action: "add" as const, videoId: VIDEO_ID, title: TITLE };
+    await lounge.queueCommand(command);
+
+    // When
+    failNextBind = true;
+    const items = await lounge.queueCommand(command);
+
+    // Then
+    assert.deepEqual(items, [{ videoId: VIDEO_ID, title: TITLE }]);
+    assert.equal(tokenRequests, 2);
+});
+
+test("a bind without a queue starts a fresh fx_cast list", async () => {
+    // Given
+    let bindText = BIND_TEXT;
+    const post: PostFn = async (url) => {
+        if (url.includes("get_lounge_token_batch")) {
+            return { status: 200, text: JSON.stringify({ screens: [{ loungeToken: LOUNGE_TOKEN, expiration: HOUR_MS }] }) };
+        }
+        if (url.includes("SID=")) return { status: 200, text: "" };
+        return { status: 200, text: bindText };
+    };
+    const lounge = happyLounge(post);
+    await lounge.queueCommand({ deviceId: DEVICE_ID, host: HOST, action: "add", videoId: "old", title: "Old" });
+
+    // When: YouTube restarted, no playlist reported
+    bindText = '[[0,["c","SID2","",8]],[1,["S","GS2"]]]';
+    const items = await lounge.queueCommand({ deviceId: DEVICE_ID, host: HOST, action: "add", videoId: VIDEO_ID, title: TITLE });
+
+    // Then
+    assert.deepEqual(items, [{ videoId: VIDEO_ID, title: TITLE }]);
+});

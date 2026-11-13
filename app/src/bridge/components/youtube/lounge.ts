@@ -62,12 +62,12 @@ export class LoungeQueueMemory {
         action: LoungeAction,
         item: LoungeQueueItem
     ): LoungeQueueItem[] {
+        // Another (or no) queue on the device: what fx_cast added is gone
         let queue = this.queues.get(deviceId);
-        if (!queue || (listId && queue.listId && queue.listId !== listId)) {
+        if (!queue || queue.listId !== listId) {
             queue = { listId, items: [] };
             this.queues.set(deviceId, queue);
         }
-        queue.listId = listId ?? queue.listId;
 
         const isQueued = queue.items.some(i => i.videoId === item.videoId);
         switch (action) {
@@ -203,8 +203,17 @@ export async function castScreenId(host: string): Promise<string> {
                 ).send({ type: "CONNECT" });
                 const mdx = channel(app.transportId, MDX_NAMESPACE);
                 mdx.on("message", (reply: any) => {
-                    if (reply.type !== "mdxSessionStatus") return;
-                    finish(() => resolve(reply.data.screenId));
+                    if (reply?.type !== "mdxSessionStatus") return;
+                    const screenId = reply.data?.screenId;
+                    finish(() =>
+                        screenId
+                            ? resolve(screenId)
+                            : reject(
+                                  new Error(
+                                      "Couldn't connect to YouTube on this device"
+                                  )
+                              )
+                    );
                 });
                 mdx.send({ type: "getMdxSessionStatus" });
             });
@@ -240,8 +249,37 @@ export class YouTubeLounge {
         title: string;
     }): Promise<LoungeQueueItem[]> {
         const screenId = await this.getScreenId(opts.host);
-        const token = await this.getLoungeToken(screenId);
 
+        let listId: string | undefined;
+        try {
+            listId = await this.sendCommand(
+                await this.getLoungeToken(screenId),
+                opts.action,
+                opts.videoId
+            );
+        } catch (err) {
+            // Token revoked (e.g. the TV's YouTube app re-linked): retry once
+            if (!(err instanceof AuthError)) throw err;
+            this.tokens.delete(screenId);
+            listId = await this.sendCommand(
+                await this.getLoungeToken(screenId),
+                opts.action,
+                opts.videoId
+            );
+        }
+
+        return this.memory.apply(opts.deviceId, listId, opts.action, {
+            videoId: opts.videoId,
+            title: opts.title
+        });
+    }
+
+    /** Binds and sends one command; returns the queue's list ID. */
+    private async sendCommand(
+        token: string,
+        action: LoungeAction,
+        videoId: string
+    ): Promise<string | undefined> {
         // Re-bind for every command; lounge sessions go stale quickly
         const bind = await this.post(
             `${LOUNGE_BASE}/bc/bind?RID=0&VER=8&CVER=1`,
@@ -264,14 +302,11 @@ export class YouTubeLounge {
                 CVER: "1"
             })}`,
             { [LOUNGE_TOKEN_HEADER]: token },
-            buildCommandBody(opts.action, opts.videoId)
+            buildCommandBody(action, videoId)
         );
         if (command.status !== 200) throw rejected(command.status);
 
-        return this.memory.apply(opts.deviceId, listId, opts.action, {
-            videoId: opts.videoId,
-            title: opts.title
-        });
+        return listId;
     }
 
     /** What fx_cast has queued on a device (YouTube's queue is unreadable). */
@@ -297,14 +332,22 @@ export class YouTubeLounge {
 
         this.tokens.set(screenId, {
             token: screen.loungeToken,
-            expiresAt: screen.expiration
-                ? Number(screen.expiration)
-                : this.now() + DEFAULT_TOKEN_LIFETIME_MS
+            // Refresh a minute early so a token never expires mid-request
+            expiresAt:
+                (screen.expiration
+                    ? Number(screen.expiration)
+                    : this.now() + DEFAULT_TOKEN_LIFETIME_MS) - 60 * 1000
         });
         return screen.loungeToken;
     }
 }
 
+/** YouTube refused the lounge token (expired or revoked). */
+class AuthError extends Error {}
+
 function rejected(status: number) {
-    return new Error(`YouTube rejected the request (HTTP ${status})`);
+    const message = `YouTube rejected the request (HTTP ${status})`;
+    return [401, 403, 410].includes(status)
+        ? new AuthError(message)
+        : new Error(message);
 }

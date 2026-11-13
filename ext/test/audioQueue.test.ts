@@ -34,7 +34,8 @@ test("can queue audio onto default media receiver session", () => {
         canQueueAudio({
             isAudioOnly: true,
             appId: DEFAULT_MEDIA_RECEIVER,
-            mediaSessionId: MEDIA_SESSION_ID
+            mediaSessionId: MEDIA_SESSION_ID,
+            playerState: "PLAYING"
         }),
         true
     );
@@ -115,4 +116,28 @@ test("marks HLS live streams as LIVE", () => {
     );
 
     assert.equal((message.items[0] as any).media.streamType, "LIVE");
+});
+
+test("cannot queue after the media has finished", () => {
+    assert.equal(
+        canQueueAudio({
+            isAudioOnly: true,
+            appId: DEFAULT_MEDIA_RECEIVER,
+            mediaSessionId: MEDIA_SESSION_ID,
+            playerState: "IDLE"
+        }),
+        false
+    );
+});
+
+test("can queue while paused", () => {
+    assert.equal(
+        canQueueAudio({
+            isAudioOnly: true,
+            appId: DEFAULT_MEDIA_RECEIVER,
+            mediaSessionId: MEDIA_SESSION_ID,
+            playerState: "PAUSED"
+        }),
+        true
+    );
 });

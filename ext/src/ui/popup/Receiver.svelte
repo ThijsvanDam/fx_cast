@@ -53,7 +53,8 @@
     $: canQueue = canQueueAudio({
         isAudioOnly,
         appId: application?.appId,
-        mediaSessionId: device.mediaStatus?.mediaSessionId
+        mediaSessionId: device.mediaStatus?.mediaSessionId,
+        playerState: device.mediaStatus?.playerState
     });
     /** Current media status (if available) */
     $: mediaStatus = device.mediaStatus;

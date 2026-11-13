@@ -171,6 +171,16 @@ export default new (class extends TypedEventTarget<EventMap> {
 
                 // Clear media status when app status changes
                 const application = status.applications?.[0];
+
+                // A different app took over: old media status is stale
+                if (
+                    application &&
+                    oldApplication &&
+                    application.transportId !== oldApplication.transportId
+                ) {
+                    delete device.mediaStatus;
+                }
+
                 if (!application || application.isIdleScreen) {
                     delete device.mediaStatus;
 

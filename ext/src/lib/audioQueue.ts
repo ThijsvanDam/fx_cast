@@ -10,17 +10,22 @@ interface QueueableAudio {
 
 /**
  * Whether audio can be added to a receiver's queue: only when casting
- * audio only onto a Default Media Receiver media session.
+ * audio only onto a live (playing, paused or buffering) Default Media
+ * Receiver media session. A finished (IDLE) session rejects queue
+ * requests.
  */
 export function canQueueAudio(opts: {
     isAudioOnly: boolean;
     appId?: string;
     mediaSessionId?: number;
+    playerState?: string;
 }): boolean {
     return (
         opts.isAudioOnly &&
         opts.appId === DEFAULT_MEDIA_RECEIVER_APP_ID &&
-        opts.mediaSessionId !== undefined
+        opts.mediaSessionId !== undefined &&
+        opts.playerState !== undefined &&
+        opts.playerState !== "IDLE"
     );
 }
 

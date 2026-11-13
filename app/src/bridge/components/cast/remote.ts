@@ -22,6 +22,8 @@ interface CastRemoteOptions {
  */
 export default class Remote extends CastClient {
     private transportClient?: RemoteTransport;
+    /** Transport ID of the app `transportClient` is connected to. */
+    private transportId?: string;
 
     constructor(private host: string, private options?: CastRemoteOptions) {
         super();
@@ -62,6 +64,16 @@ export default class Remote extends CastClient {
         }
 
         const application = message.status.applications?.[0];
+
+        // Another app replaced the tracked one: drop the stale transport
+        if (
+            application &&
+            this.transportClient &&
+            this.transportId !== application.transportId
+        ) {
+            this.transportClient.disconnect();
+            this.transportClient = undefined;
+        }
         if (!application || application.isIdleScreen) {
             // Handle app close
             if (this.transportClient) {
@@ -75,6 +87,7 @@ export default class Remote extends CastClient {
 
         // Handle app creation/discovery
         if (application && !this.transportClient) {
+            this.transportId = application.transportId;
             this.transportClient = new RemoteTransport(
                 application.transportId,
                 message => this.onMediaMessage(message)

@@ -1,4 +1,5 @@
 import CastClient from "./client";
+import { QueueTracker } from "./queueTracker";
 
 import type {
     MediaStatus,
@@ -24,6 +25,8 @@ export default class Remote extends CastClient {
     private transportClient?: RemoteTransport;
     /** Transport ID of the app `transportClient` is connected to. */
     private transportId?: string;
+    private queueTracker = new QueueTracker();
+    private mediaSessionId?: number;
 
     constructor(private host: string, private options?: CastRemoteOptions) {
         super();
@@ -50,18 +53,20 @@ export default class Remote extends CastClient {
     sendMediaMessage(message: SenderMediaMessage) {
         this.transportClient?.sendMediaMessage(message);
 
-        // Queue changes aren't always broadcast with the item list;
-        // request a full status so the queue view stays current.
+        // Keep the full queue current after queue commands
         if (message.type.startsWith("QUEUE_")) {
-            this.requestMediaStatus();
+            this.requestQueue();
         }
     }
 
-    private requestMediaStatus() {
+    /** Fetches the full queue (status only reports a window of it). */
+    private requestQueue() {
+        if (this.mediaSessionId === undefined) return;
         this.transportClient?.sendMediaMessage({
-            type: "GET_STATUS",
-            requestId: 0
-        });
+            type: "QUEUE_GET_ITEM_IDS",
+            requestId: 0,
+            mediaSessionId: this.mediaSessionId
+        } as unknown as SenderMediaMessage);
     }
 
     /**
@@ -126,17 +131,71 @@ export default class Remote extends CastClient {
      * results in a `MEDIA_STATUS` response.
      */
     private onMediaMessage(message: ReceiverMediaMessage) {
-        // Receiver announces queue changes separately; fetch the new list
-        if ((message.type as string) === "QUEUE_CHANGE") {
-            this.requestMediaStatus();
-            return;
+        // Queue messages aren't part of the typed media message union
+        const queueMessage = message as unknown as {
+            type: string;
+            itemIds?: number[];
+            items?: unknown[];
+        };
+
+        switch (queueMessage.type) {
+            // Receiver announces queue changes separately
+            case "QUEUE_CHANGE":
+                this.requestQueue();
+                return;
+
+            case "QUEUE_ITEM_IDS": {
+                const { requests, items } = this.queueTracker.handleItemIds(
+                    queueMessage.itemIds ?? []
+                );
+                for (const itemIds of requests) {
+                    this.transportClient?.sendMediaMessage({
+                        type: "QUEUE_GET_ITEMS",
+                        requestId: 0,
+                        mediaSessionId: this.mediaSessionId,
+                        itemIds
+                    } as unknown as SenderMediaMessage);
+                }
+                if (items) this.sendQueue(items);
+                return;
+            }
+
+            case "QUEUE_ITEMS": {
+                const items = this.queueTracker.handleItems(
+                    (queueMessage.items ?? []) as { itemId?: number }[]
+                );
+                if (items) this.sendQueue(items);
+                return;
+            }
         }
 
         if (message.type !== "MEDIA_STATUS") {
             return;
         }
 
-        this.options?.onMediaStatusUpdate?.(message.status[0]);
+        const status = message.status[0];
+        if (!status) return;
+        this.mediaSessionId = status.mediaSessionId;
+
+        // Forward without the windowed items; the full queue follows
+        const { status: forwarded, shouldRefresh } =
+            this.queueTracker.handleMediaStatus(
+                status as unknown as {
+                    items?: { itemId?: number }[];
+                    mediaSessionId?: number;
+                }
+            );
+        this.options?.onMediaStatusUpdate?.(forwarded as MediaStatus);
+        if (shouldRefresh) this.requestQueue();
+    }
+
+    /** Forwards the full queue as a partial media status update. */
+    private sendQueue(items: unknown[]) {
+        if (this.mediaSessionId === undefined) return;
+        this.options?.onMediaStatusUpdate?.({
+            mediaSessionId: this.mediaSessionId,
+            items
+        } as unknown as MediaStatus);
     }
 }
 

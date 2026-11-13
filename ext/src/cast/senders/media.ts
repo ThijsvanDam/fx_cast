@@ -16,6 +16,11 @@ interface MediaSenderOpts {
     mediaUrl: string;
     contextTabId?: number;
     mediaElement?: HTMLMediaElement;
+    mediaTitle?: string;
+    mediaImageUrl?: string;
+    mediaContentType?: string;
+    /** Pause the page's videos once the media has loaded. */
+    pauseVideosOnLoad?: boolean;
 }
 
 export default class MediaSender {
@@ -26,6 +31,11 @@ export default class MediaSender {
 
     /** Target media element if loaded as a content script. */
     private mediaElement?: HTMLMediaElement;
+
+    private mediaTitle?: string;
+    private mediaImageUrl?: string;
+    private mediaContentType?: string;
+    private pauseVideosOnLoad: boolean;
 
     private isLocalMedia = false;
     private isLocalMediaEnabled = false;
@@ -40,6 +50,10 @@ export default class MediaSender {
         this.mediaUrl = opts.mediaUrl;
         this.contextTabId = opts.contextTabId;
         this.mediaElement = opts.mediaElement;
+        this.mediaTitle = opts.mediaTitle;
+        this.mediaImageUrl = opts.mediaImageUrl;
+        this.mediaContentType = opts.mediaContentType;
+        this.pauseVideosOnLoad = opts.pauseVideosOnLoad ?? false;
 
         this.init();
     }
@@ -120,7 +134,7 @@ export default class MediaSender {
 
     private async loadMedia() {
         let mediaUrl = new URL(this.mediaUrl);
-        const mediaTitle = mediaUrl.pathname.slice(1);
+        const mediaTitle = this.mediaTitle ?? mediaUrl.pathname.slice(1);
         const subtitleUrls: URL[] = [];
 
         if (this.isLocalMedia) {
@@ -139,9 +153,15 @@ export default class MediaSender {
             }
         }
 
-        const mediaInfo = new cast.media.MediaInfo(mediaUrl.href, "");
+        const mediaInfo = new cast.media.MediaInfo(
+            mediaUrl.href,
+            this.mediaContentType ?? ""
+        );
         mediaInfo.metadata = new cast.media.GenericMediaMetadata();
         mediaInfo.metadata.title = mediaTitle;
+        if (this.mediaImageUrl) {
+            mediaInfo.metadata.images = [new cast.Image(this.mediaImageUrl)];
+        }
         mediaInfo.tracks = [];
 
         const activeTrackIds: number[] = [];
@@ -240,6 +260,12 @@ export default class MediaSender {
 
         this.session?.loadMedia(loadRequest, async media => {
             this.media = media;
+
+            if (this.pauseVideosOnLoad) {
+                document
+                    .querySelectorAll("video")
+                    .forEach(video => video.pause());
+            }
 
             if (
                 (await options.get("mediaSyncElement")) &&
@@ -362,6 +388,16 @@ if (window.location.protocol !== "moz-extension:") {
 
     new MediaSender({
         mediaUrl: window_.mediaUrl,
-        mediaElement
+        mediaElement,
+        mediaTitle: window_.mediaTitle,
+        mediaImageUrl: window_.mediaImageUrl,
+        mediaContentType: window_.mediaContentType,
+        pauseVideosOnLoad: window_.pauseVideosOnLoad
     });
+
+    // Globals persist between injections; don't leak into the next cast
+    delete window_.mediaTitle;
+    delete window_.mediaImageUrl;
+    delete window_.mediaContentType;
+    delete window_.pauseVideosOnLoad;
 }

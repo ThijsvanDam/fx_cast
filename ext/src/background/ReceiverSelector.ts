@@ -106,7 +106,7 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
         this.availableMediaTypes = opts.availableMediaTypes;
 
         const popupSizePosition = {
-            width: 400,
+            width: 480,
             height: 200,
             left: 100,
             top: 100
@@ -117,7 +117,13 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
          * left/top positions for the popup.
          */
         const refWin = await browser.windows.getCurrent();
-        if (refWin.width && refWin.height && refWin.left && refWin.top) {
+        // A maximized/fullscreen window sits at 0,0; 0 is a valid position
+        if (
+            refWin.width !== undefined &&
+            refWin.height !== undefined &&
+            refWin.left !== undefined &&
+            refWin.top !== undefined
+        ) {
             const centerX = refWin.left + refWin.width / 2;
             const centerY = refWin.top + refWin.height / 3;
 
@@ -143,7 +149,8 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
 
         // Size/position not set correctly on creation (bug 1396881)
         await browser.windows.update(popup.id, {
-            ...popupSizePosition
+            ...popupSizePosition,
+            focused: true
         });
 
         this.windowId = popup.id;

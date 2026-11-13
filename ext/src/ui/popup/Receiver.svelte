@@ -25,6 +25,13 @@
     const dispatch = createEventDispatcher<{
         cast: { device: ReceiverDevice };
         stop: { device: ReceiverDevice };
+        queue: { device: ReceiverDevice };
+        youtubeQueue: {
+            device: ReceiverDevice;
+            action: "add" | "playNext" | "remove";
+            videoId?: string;
+            title?: string;
+        };
     }>();
 
     export let port: Nullable<Port>;
@@ -40,6 +47,8 @@
     export let device: ReceiverDevice;
     /** Whether the selector is casting audio only. */
     export let isAudioOnly = false;
+    /** Whether the page is a YouTube video cast with video and audio. */
+    export let canQueueYouTube = false;
     export let connectedSessionIds: string[];
 
     export let opts: Nullable<Options>;
@@ -49,6 +58,10 @@
     /** Whether the receiver is playing something (not idle). */
     $: isBusy = !!application && !application.isIdleScreen;
     $: isPlaying = device.mediaStatus?.playerState === "PLAYING";
+    /** Receiver runs the YouTube app (queue via the Lounge API). */
+    $: isYouTubeApp = application?.appId === "233637DE";
+    $: showYouTubeQueueActions = isBusy && isYouTubeApp && canQueueYouTube;
+    $: youtubeQueue = isYouTubeApp ? device.youtubeQueue ?? [] : [];
     /** Title of the media currently playing (if known). */
     $: mediaTitle = device.mediaStatus?.media?.metadata?.title;
     /** Upcoming queue items (Default Media Receiver only). */
@@ -486,6 +499,31 @@
                 {/if}
             </button>
 
+            {#if showYouTubeQueueActions}
+                <button
+                    class="receiver__action"
+                    disabled={isAnyConnecting}
+                    on:click={() => {
+                        isQueueing = true;
+                        dispatch("youtubeQueue", { device, action: "add" });
+                    }}
+                >
+                    <img src="icons/queue.svg" alt="" width="16" height="16" />
+                    {_("popupQueueButtonTitle")}
+                </button>
+                <button
+                    class="receiver__action"
+                    disabled={isAnyConnecting}
+                    on:click={() => {
+                        isQueueing = true;
+                        dispatch("youtubeQueue", { device, action: "playNext" });
+                    }}
+                >
+                    <img src="icons/play-next.svg" alt="" width="16" height="16" />
+                    {_("popupPlayNextButtonTitle")}
+                </button>
+            {/if}
+
             {#if isBusy && canQueue}
                 <button
                     class="receiver__action"
@@ -549,6 +587,36 @@
                 on:volumeChanged={ev => handleVolumeChange(ev.detail)}
             />
         </div>
+
+        {#if youtubeQueue.length}
+            <div class="receiver__queue">
+                <div class="receiver__queue-heading">
+                    {_("popupYouTubeQueueHeading")}
+                </div>
+                <ol class="receiver__queue-list">
+                    {#each youtubeQueue as item (item.videoId)}
+                        <li class="receiver__queue-item">
+                            <span class="receiver__queue-title">{item.title}</span>
+                            <button
+                                type="button"
+                                class="receiver__queue-remove ghost"
+                                title={_("popupQueueRemove")}
+                                aria-label={_("popupQueueRemove")}
+                                on:click={() =>
+                                    dispatch("youtubeQueue", {
+                                        device,
+                                        action: "remove",
+                                        videoId: item.videoId,
+                                        title: item.title
+                                    })}
+                            >
+                                <img src="icons/remove.svg" alt="" width="16" height="16" />
+                            </button>
+                        </li>
+                    {/each}
+                </ol>
+            </div>
+        {/if}
 
         {#if upNext.length}
             <div class="receiver__queue">

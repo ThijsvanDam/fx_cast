@@ -63,6 +63,14 @@
         "message": "Remove from queue",
         "description": "Button title/label for removing an item from the receiver's queue."
     },
+    "popupPlayNextButtonTitle": {
+        "message": "Play next",
+        "description": "Receiver button that queues the video to play right after the current one (YouTube app)."
+    },
+    "popupYouTubeQueueHeading": {
+        "message": "Added from fx_cast",
+        "description": "Heading of videos fx_cast queued on the YouTube app (YouTube's own queue can't be read)."
+    },
     "popupReplaceButtonTitle": {
         "message": "Replace",
         "description": "Receiver button that casts over whatever the receiver is currently playing."

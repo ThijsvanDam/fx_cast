@@ -19,6 +19,7 @@
     import { hasRequiredCapabilities } from "../../cast/utils";
 
     import Receiver from "./Receiver.svelte";
+    import { getYouTubeVideoId } from "../../lib/youtubeVideo";
 
     const _ = browser.i18n.getMessage;
 
@@ -335,6 +336,23 @@
         });
     }
 
+    /** YouTube app queue actions (add / play next / remove). */
+    function onReceiverYouTubeQueue(detail: {
+        device: ReceiverDevice;
+        action: "add" | "playNext" | "remove";
+        videoId?: string;
+        title?: string;
+    }) {
+        errorMessage = null;
+        // Removing keeps the selector open and usable
+        if (detail.action !== "remove") isConnecting = true;
+
+        port?.postMessage({
+            subject: "main:youtubeQueueSelected",
+            data: detail
+        });
+    }
+
     function onReceiverQueue(device: ReceiverDevice) {
         isConnecting = true;
         errorMessage = null;
@@ -471,6 +489,10 @@
                     ReceiverSelectorMediaType.AudioOnly}
                 on:cast={ev => onReceiverCast(ev.detail.device)}
                 on:queue={ev => onReceiverQueue(ev.detail.device)}
+                canQueueYouTube={effectiveMediaType ===
+                    ReceiverSelectorMediaType.App &&
+                    !!getYouTubeVideoId(pageInfo?.url ?? "")}
+                on:youtubeQueue={ev => onReceiverYouTubeQueue(ev.detail)}
                 on:stop={ev => onReceiverStop(ev.detail.device)}
             />
         {/each}

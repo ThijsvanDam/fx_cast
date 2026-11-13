@@ -5,6 +5,7 @@ import Discovery from "./components/cast/discovery";
 import Remote from "./components/cast/remote";
 
 import { startMediaServer, stopMediaServer } from "./components/mediaServer";
+import { resolveYouTubeAudio } from "./components/youtube";
 
 import { applicationVersion } from "../../config.json";
 
@@ -117,6 +118,23 @@ messaging.on("message", (message: Message) => {
         }
         case "bridge:stopMediaServer": {
             stopMediaServer();
+            break;
+        }
+
+        case "bridge:resolveYouTubeAudio": {
+            resolveYouTubeAudio(message.data.pageUrl)
+                .then(audio => {
+                    messaging.sendMessage({
+                        subject: "main:youTubeAudioResolved",
+                        data: audio
+                    });
+                })
+                .catch((err: Error) => {
+                    messaging.sendMessage({
+                        subject: "main:youTubeAudioError",
+                        data: err.message
+                    });
+                });
             break;
         }
 

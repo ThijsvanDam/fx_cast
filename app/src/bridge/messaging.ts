@@ -14,6 +14,7 @@ import type {
     CastSessionCreatedDetails,
     CastSessionUpdatedDetails
 } from "./messagingTypes";
+import type { ResolvedAudio } from "./components/youtube";
 
 /**
  * IMPORTANT:
@@ -190,6 +191,16 @@ type MessageDefinitions = {
      * encountered an error.
      */
     "mediaCast:mediaServerError": string;
+
+    /**
+     * Sent to the bridge to resolve the audio-only stream URL of a
+     * YouTube page via yt-dlp.
+     */
+    "bridge:resolveYouTubeAudio": { pageUrl: string };
+    /** Sent from the bridge with the resolved audio stream. */
+    "main:youTubeAudioResolved": ResolvedAudio;
+    /** Sent from the bridge when resolving the audio stream failed. */
+    "main:youTubeAudioError": string;
 };
 
 interface MessageBase<K extends keyof MessageDefinitions> {

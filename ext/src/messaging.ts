@@ -295,6 +295,21 @@ type AppMessageDefinitions = {
      * encountered an error.
      */
     "mediaCast:mediaServerError": string;
+
+    /**
+     * Sent to the bridge to resolve the audio-only stream URL of a
+     * YouTube page via yt-dlp.
+     */
+    "bridge:resolveYouTubeAudio": { pageUrl: string };
+    /** Sent from the bridge with the resolved audio stream. */
+    "main:youTubeAudioResolved": {
+        url: string;
+        title: string;
+        thumbnail?: string;
+        contentType: string;
+    };
+    /** Sent from the bridge when resolving the audio stream failed. */
+    "main:youTubeAudioError": string;
 };
 
 type MessageDefinitions = ExtMessageDefinitions & AppMessageDefinitions;

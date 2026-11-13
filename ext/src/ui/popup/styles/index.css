@@ -83,6 +83,14 @@ body {
     margin-inline-start: 0.5em;
 }
 
+.audio-mode-select {
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 1.5em;
+    margin: 0 1em;
+    padding: 0.5em 0;
+}
+
 .receiver-list {
     list-style: none;
     margin: initial;

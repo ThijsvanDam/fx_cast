@@ -52,12 +52,27 @@
     /** Error to show in the selector (e.g. audio-only lookup failed). */
     let errorMessage: Nullable<string> = null;
     // Clear the error when the user picks another media type
-    $: mediaType, (errorMessage = null);
+    $: effectiveMediaType, (errorMessage = null);
+
+    /** "Audio only" chosen for the app (YouTube) media type. */
+    let isAudioOnly = false;
+    $: isAudioOnlyAvailable = !!(
+        availableMediaTypes & ReceiverSelectorMediaType.AudioOnly
+    );
+    // Without the page's cast app, audio only is the only way to cast it
+    $: if (isAudioOnlyAvailable && !isAppMediaTypeAvailable) isAudioOnly = true;
+    /** Media type actually used for filtering and casting. */
+    $: effectiveMediaType =
+        mediaType === ReceiverSelectorMediaType.App &&
+        isAudioOnly &&
+        isAudioOnlyAvailable
+            ? ReceiverSelectorMediaType.AudioOnly
+            : mediaType;
 
     /** Extension options */
     let opts: Nullable<Options> = null;
 
-    $: isMediaTypeAvailable = !!(availableMediaTypes & mediaType);
+    $: isMediaTypeAvailable = !!(availableMediaTypes & effectiveMediaType);
     $: isAppMediaTypeAvailable = !!(
         availableMediaTypes & ReceiverSelectorMediaType.App
     );
@@ -316,7 +331,7 @@
 
         port?.postMessage({
             subject: "main:receiverSelected",
-            data: { device, mediaType }
+            data: { device, mediaType: effectiveMediaType }
         });
     }
 
@@ -372,16 +387,10 @@
             <select class="media-type-select__dropdown" bind:value={mediaType}>
                 <option
                     value={ReceiverSelectorMediaType.App}
-                    disabled={!isAppMediaTypeAvailable}
+                    disabled={!isAppMediaTypeAvailable && !isAudioOnlyAvailable}
                 >
                     {knownApp?.name ?? _("popupMediaTypeApp")}
                 </option>
-
-                {#if availableMediaTypes & ReceiverSelectorMediaType.AudioOnly}
-                    <option value={ReceiverSelectorMediaType.AudioOnly}>
-                        {_("popupMediaTypeAudioOnly")}
-                    </option>
-                {/if}
 
                 {#if opts?.mirroringEnabled}
                     <option
@@ -406,6 +415,30 @@
     <div class="banner banner--warn">{errorMessage}</div>
 {/if}
 
+{#if isAudioOnlyAvailable && mediaType === ReceiverSelectorMediaType.App}
+    <div class="audio-mode-select">
+        <label>
+            <input
+                type="radio"
+                name="audio-mode"
+                value={false}
+                bind:group={isAudioOnly}
+                disabled={!isAppMediaTypeAvailable}
+            />
+            {_("popupMediaTypeVideoAndAudio")}
+        </label>
+        <label>
+            <input
+                type="radio"
+                name="audio-mode"
+                value={true}
+                bind:group={isAudioOnly}
+            />
+            {_("popupMediaTypeAudioOnly")}
+        </label>
+    </div>
+{/if}
+
 <ul class="receiver-list">
     {#if !devices.length}
         <div class="receiver-list__not-found">
@@ -421,7 +454,7 @@
                 {isMediaTypeAvailable}
                 isAnyMediaTypeAvailable={availableMediaTypes !==
                     ReceiverSelectorMediaType.None &&
-                    isDeviceCompatible(mediaType, device)}
+                    isDeviceCompatible(effectiveMediaType, device)}
                 isAnyConnecting={isConnecting}
                 bind:lastMenuShownDeviceId
                 on:cast={ev => onReceiverCast(ev.detail.device)}

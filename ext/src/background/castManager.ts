@@ -1029,6 +1029,11 @@ async function getReceiverSelection(selectionOpts: {
     // Offer audio-only casting on YouTube video pages
     if (pageInfo && isYouTubeAudioOnlyUrl(pageInfo.url)) {
         availableMediaTypes |= ReceiverSelectorMediaType.AudioOnly;
+
+        // Open on the app option (audio only) even without the page's app
+        if (!(availableMediaTypes & ReceiverSelectorMediaType.App)) {
+            defaultMediaType = ReceiverSelectorMediaType.App;
+        }
     }
 
     // Disable mirroring media types if mirroring is not enabled

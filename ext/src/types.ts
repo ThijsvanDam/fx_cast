@@ -25,7 +25,8 @@ export enum ReceiverSelectorMediaType {
     None = 0,
     App = 1,
     Tab = 2,
-    Screen = 4
+    Screen = 4,
+    AudioOnly = 8
 }
 
 export interface ReceiverSelectorAppInfo {

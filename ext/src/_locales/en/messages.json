@@ -1,6 +1,6 @@
 {
     "extensionName": {
-        "message": "fx_cast",
+        "message": "fx_cast (cosy)",
         "description": "Name of the extension and the native receiver selector window title."
     },
     "extensionDescription": {

@@ -28,6 +28,9 @@ type MenuId = string | number;
 let menuIdCast: MenuId;
 let menuIdCastMedia: MenuId;
 let menuIdListen: MenuId;
+
+/** Tabs with a "Listen on..." audio lookup in progress. */
+const listenTabsResolving = new Set<number>();
 let menuIdWhitelist: MenuId;
 let menuIdWhitelistRecommended: MenuId;
 
@@ -229,6 +232,17 @@ async function onMenuClicked(
  * capability is requested and audio-only speakers are offered.
  */
 async function listenOnSpeaker(tabId: number, pageUrl: string) {
+    // Resolving takes a few seconds; ignore repeat clicks meanwhile
+    if (listenTabsResolving.has(tabId)) return;
+    listenTabsResolving.add(tabId);
+
+    const notificationId = await browser.notifications.create({
+        type: "basic",
+        title: "fx_cast",
+        message: "Finding audio stream...",
+        iconUrl: "icons/icon.svg"
+    });
+
     try {
         const audio = await resolveYouTubeAudio(pageUrl);
 
@@ -253,6 +267,9 @@ async function listenOnSpeaker(tabId: number, pageUrl: string) {
             message: err instanceof Error ? err.message : String(err),
             iconUrl: "icons/icon.svg"
         });
+    } finally {
+        listenTabsResolving.delete(tabId);
+        browser.notifications.clear(notificationId);
     }
 }
 

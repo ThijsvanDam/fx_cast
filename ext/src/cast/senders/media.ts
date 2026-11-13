@@ -258,6 +258,17 @@ export default class MediaSender {
         loadRequest.autoplay = true;
         loadRequest.activeTrackIds = activeTrackIds;
 
+        // Continue from where the page's video is (not for live streams)
+        if (
+            this.pauseVideosOnLoad &&
+            this.mediaContentType !== "application/x-mpegURL"
+        ) {
+            const pageVideo = document.querySelector("video");
+            if (pageVideo && pageVideo.currentTime > 0) {
+                loadRequest.currentTime = pageVideo.currentTime;
+            }
+        }
+
         this.session?.loadMedia(loadRequest, async media => {
             this.media = media;
 
@@ -272,6 +283,13 @@ export default class MediaSender {
                 this.mediaElement instanceof HTMLMediaElement
             ) {
                 this.addMediaElementListeners(this.mediaElement);
+            }
+        }, err => {
+            logger.error("Failed to load media on receiver", err);
+            if (this.pauseVideosOnLoad) {
+                window.alert(
+                    `fx_cast: the speaker could not play this audio (${err.code}).`
+                );
             }
         });
     }

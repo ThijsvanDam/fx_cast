@@ -34,7 +34,7 @@ function failingRun(message: string) {
 test("resolves m4a audio", async () => {
     // Given
     const { run, calls } = fakeRun(
-        `${AUDIO_URL}\nMy Video\n${THUMBNAIL}\nm4a\n`
+        `${AUDIO_URL}\nMy Video\n${THUMBNAIL}\nm4a\nhttps\n`
     );
 
     // When
@@ -59,7 +59,7 @@ test("resolves m4a audio", async () => {
 });
 
 test("maps webm to audio/webm", async () => {
-    const { run } = fakeRun(`${AUDIO_URL}\nMy Video\n${THUMBNAIL}\nwebm\n`);
+    const { run } = fakeRun(`${AUDIO_URL}\nMy Video\n${THUMBNAIL}\nwebm\nhttps\n`);
 
     const result = await resolveYouTubeAudio(PAGE_URL, {
         run,
@@ -70,7 +70,7 @@ test("maps webm to audio/webm", async () => {
 });
 
 test("missing thumbnail", async () => {
-    const { run } = fakeRun(`${AUDIO_URL}\nMy Video\nNA\nm4a\n`);
+    const { run } = fakeRun(`${AUDIO_URL}\nMy Video\nNA\nm4a\nhttps\n`);
 
     const result = await resolveYouTubeAudio(PAGE_URL, {
         run,
@@ -143,5 +143,27 @@ test("findYtDlp prefers PATH, then Homebrew, else null", () => {
     assert.equal(
         findYtDlp(p => p === "/b/yt-dlp" || p === "/opt/homebrew/bin/yt-dlp", pathEnv),
         "/b/yt-dlp"
+    );
+});
+
+test("maps live HLS stream to application/x-mpegURL", async () => {
+    const { run } = fakeRun(
+        `${AUDIO_URL}/index.m3u8\nLofi Radio\n${THUMBNAIL}\nmp4\nm3u8_native\n`
+    );
+
+    const result = await resolveYouTubeAudio(PAGE_URL, {
+        run,
+        ytDlpPath: YT_DLP
+    });
+
+    assert.equal(result.contentType, "application/x-mpegURL");
+});
+
+test("rejects output without an audio URL", async () => {
+    const { run } = fakeRun("\n");
+
+    await assert.rejects(
+        resolveYouTubeAudio(PAGE_URL, { run, ytDlpPath: YT_DLP }),
+        { message: "yt-dlp returned no audio URL" }
     );
 });

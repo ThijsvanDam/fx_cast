@@ -136,6 +136,8 @@ export async function resolveYouTubeAudio(
                 "thumbnail",
                 "--print",
                 "ext",
+                "--print",
+                "protocol",
                 pageUrl
             ],
             YT_DLP_TIMEOUT_MS
@@ -144,12 +146,21 @@ export async function resolveYouTubeAudio(
         throw new Error(toErrorMessage((err as Error).message));
     }
 
-    const [url, title, thumbnail, ext] = stdout.trim().split("\n");
+    const [url, title, thumbnail, ext, protocol] = stdout.trim().split("\n");
+
+    if (!url?.startsWith("http")) {
+        throw new Error("yt-dlp returned no audio URL");
+    }
+
+    // Live streams come back as HLS playlists
+    const contentType = protocol?.includes("m3u8")
+        ? "application/x-mpegURL"
+        : CONTENT_TYPES[ext] ?? "audio/mp4";
 
     return {
         url,
         title,
         thumbnail: thumbnail && thumbnail !== "NA" ? thumbnail : undefined,
-        contentType: CONTENT_TYPES[ext] ?? "audio/mp4"
+        contentType
     };
 }

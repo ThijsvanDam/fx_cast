@@ -55,6 +55,14 @@
         "message": "this media",
         "description": "Receiver selector media type <option> text for media casting."
     },
+    "popupReplaceButtonTitle": {
+        "message": "Replace",
+        "description": "Receiver button that casts over whatever the receiver is currently playing."
+    },
+    "popupQueueButtonTitle": {
+        "message": "Add to queue",
+        "description": "Receiver button that adds the audio to the receiver's play queue."
+    },
     "popupMediaTypeVideoAndAudio": {
         "message": "Video and audio",
         "description": "Receiver selector option to cast the YouTube app normally (with video)."

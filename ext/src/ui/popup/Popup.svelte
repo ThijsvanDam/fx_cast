@@ -335,6 +335,16 @@
         });
     }
 
+    function onReceiverQueue(device: ReceiverDevice) {
+        isConnecting = true;
+        errorMessage = null;
+
+        port?.postMessage({
+            subject: "main:receiverQueueSelected",
+            data: { device }
+        });
+    }
+
     function onReceiverStop(device: ReceiverDevice) {
         port?.postMessage({
             subject: "main:sendReceiverMessage",
@@ -457,7 +467,10 @@
                     isDeviceCompatible(effectiveMediaType, device)}
                 isAnyConnecting={isConnecting}
                 bind:lastMenuShownDeviceId
+                isAudioOnly={effectiveMediaType ===
+                    ReceiverSelectorMediaType.AudioOnly}
                 on:cast={ev => onReceiverCast(ev.detail.device)}
+                on:queue={ev => onReceiverQueue(ev.detail.device)}
                 on:stop={ev => onReceiverStop(ev.detail.device)}
             />
         {/each}

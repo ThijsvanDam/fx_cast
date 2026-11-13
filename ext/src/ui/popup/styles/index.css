@@ -151,6 +151,19 @@ body {
     min-width: 80px;
 }
 
+.receiver__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-inline-start: auto;
+}
+.receiver__action {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.4em;
+    justify-content: center;
+}
+
 .receiver__expand-button {
     background-image: url("../../assets/photon_arrowhead_down.svg");
 }

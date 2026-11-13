@@ -1,0 +1,14 @@
+<!-- Icon shape from Material Icons (Apache License 2.0). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+    <style>
+        path {
+            fill: rgba(12, 12, 13, .8);
+        }
+        @media (prefers-color-scheme: dark) {
+            path {
+                fill: rgba(249, 249, 250, .8);
+            }
+        }
+    </style>
+    <path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" />
+</svg>

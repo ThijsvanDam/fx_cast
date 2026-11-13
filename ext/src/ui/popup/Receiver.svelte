@@ -17,6 +17,7 @@
     } from "../../cast/sdk/types";
 
     import LoadingIndicator from "../LoadingIndicator.svelte";
+    import { canQueueAudio } from "../../lib/audioQueue";
     import ReceiverMedia from "./ReceiverMedia.svelte";
 
     const _ = browser.i18n.getMessage;
@@ -37,12 +38,23 @@
 
     /** Device to display. */
     export let device: ReceiverDevice;
+    /** Whether the selector is casting audio only. */
+    export let isAudioOnly = false;
     export let connectedSessionIds: string[];
 
     export let opts: Nullable<Options>;
 
     /** Current receiver application (if available) */
     $: application = device.status?.applications?.[0];
+    /** Whether the receiver is playing something (not idle). */
+    $: isBusy = !!application && !application.isIdleScreen;
+    /** Title of the media currently playing (if known). */
+    $: mediaTitle = device.mediaStatus?.media?.metadata?.title;
+    $: canQueue = canQueueAudio({
+        isAudioOnly,
+        appId: application?.appId,
+        mediaSessionId: device.mediaStatus?.mediaSessionId
+    });
     /** Current media status (if available) */
     $: mediaStatus = device.mediaStatus;
 
@@ -102,8 +114,13 @@
 
     /** Whether a session request is in progress for this receiver.. */
     let isConnecting = false;
+    /** Whether an add-to-queue request is in progress. */
+    let isQueueing = false;
     // Reset when the selector stops connecting (e.g. after an error)
-    $: if (!isAnyConnecting) isConnecting = false;
+    $: if (!isAnyConnecting) {
+        isConnecting = false;
+        isQueueing = false;
+    }
 
     function sendReceiverMessage(
         partialMessage: DistributiveOmit<SenderMessage, "requestId">
@@ -423,37 +440,71 @@
                 <span class="receiver__app-name">
                     {application.displayName}
                 </span>
-                {#if application.statusText !== application.displayName}
+                {#if mediaTitle}
+                    · {mediaTitle}
+                {:else if application.statusText !== application.displayName}
                     · {application.statusText}
                 {/if}
             </div>
         {/if}
     </div>
-    {#if application && !application.isIdleScreen}
-        <button
-            class="receiver__stop-button"
-            on:click={() => dispatch("stop", { device })}
-        >
-            {_("popupStopButtonTitle")}
-        </button>
-    {/if}
-    <!-- Casting to a busy receiver replaces what it is playing -->
-    {#if isAnyMediaTypeAvailable}
-        <button
-            class="receiver__cast-button"
-            disabled={isConnecting || isAnyConnecting || !isMediaTypeAvailable}
-            on:click={() => {
-                isConnecting = true;
-                dispatch("cast", { device });
-            }}
-        >
-            {#if isConnecting}
-                {_("popupCastingButtonTitle", "")}<LoadingIndicator />
-            {:else}
-                {_("popupCastButtonTitle")}
+    <div class="receiver__actions">
+        <!-- Casting to a busy receiver replaces what it is playing -->
+        {#if isAnyMediaTypeAvailable}
+            <button
+                class="receiver__cast-button receiver__action"
+                disabled={isConnecting ||
+                    isAnyConnecting ||
+                    !isMediaTypeAvailable}
+                on:click={() => {
+                    isConnecting = true;
+                    dispatch("cast", { device });
+                }}
+            >
+                {#if isConnecting}
+                    {_("popupCastingButtonTitle", "")}<LoadingIndicator />
+                {:else}
+                    <img
+                        src="icons/{isBusy ? 'replace' : 'cast'}.svg"
+                        alt=""
+                        width="16"
+                        height="16"
+                    />
+                    {isBusy
+                        ? _("popupReplaceButtonTitle")
+                        : _("popupCastButtonTitle")}
+                {/if}
+            </button>
+
+            {#if isBusy && canQueue}
+                <button
+                    class="receiver__action"
+                    disabled={isAnyConnecting}
+                    on:click={() => {
+                        isQueueing = true;
+                        dispatch("queue", { device });
+                    }}
+                >
+                    {#if isQueueing}
+                        <LoadingIndicator />
+                    {:else}
+                        <img src="icons/queue.svg" alt="" width="16" height="16" />
+                    {/if}
+                    {_("popupQueueButtonTitle")}
+                </button>
             {/if}
-        </button>
-    {/if}
+        {/if}
+
+        {#if isBusy}
+            <button
+                class="receiver__stop-button receiver__action"
+                on:click={() => dispatch("stop", { device })}
+            >
+                <img src="icons/stop.svg" alt="" width="16" height="16" />
+                {_("popupStopButtonTitle")}
+            </button>
+        {/if}
+    </div>
 
     <button
         type="button"

@@ -91,6 +91,20 @@ export class LoungeQueueMemory {
         return [...(this.queues.get(deviceId)?.items ?? [])];
     }
 
+    /**
+     * The device started playing a video. If fx_cast added it, it and
+     * everything queued before it have been played: drop them.
+     * Returns whether anything changed.
+     */
+    markPlaying(deviceId: string, videoId: string): boolean {
+        const queue = this.queues.get(deviceId);
+        const index = queue?.items.findIndex(i => i.videoId === videoId) ?? -1;
+        if (!queue || index === -1) return false;
+
+        queue.items = queue.items.slice(index + 1);
+        return true;
+    }
+
     clear(deviceId: string) {
         this.queues.delete(deviceId);
     }
@@ -312,6 +326,16 @@ export class YouTubeLounge {
     /** What fx_cast has queued on a device (YouTube's queue is unreadable). */
     getQueue(deviceId: string) {
         return this.memory.get(deviceId);
+    }
+
+    /**
+     * Called with the video the device is playing; returns the updated
+     * fx_cast list if played items were dropped, otherwise null.
+     */
+    markPlaying(deviceId: string, videoId: string): LoungeQueueItem[] | null {
+        return this.memory.markPlaying(deviceId, videoId)
+            ? this.memory.get(deviceId)
+            : null;
     }
 
     private async getLoungeToken(screenId: string): Promise<string> {

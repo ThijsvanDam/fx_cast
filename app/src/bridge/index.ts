@@ -78,6 +78,21 @@ messaging.on("message", (message: Message) => {
                                             status
                                         }
                                     });
+
+                                    // Drop fx_cast-added YouTube videos once played
+                                    const playingId = status.media?.contentId;
+                                    const items =
+                                        playingId &&
+                                        youtubeLounge.markPlaying(
+                                            device.id,
+                                            playingId
+                                        );
+                                    if (items) {
+                                        messaging.sendMessage({
+                                            subject: "main:youtubeQueueUpdated",
+                                            data: { deviceId: device.id, items }
+                                        });
+                                    }
                                 }
                             })
                         );

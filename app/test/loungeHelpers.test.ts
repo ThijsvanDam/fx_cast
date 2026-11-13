@@ -94,3 +94,27 @@ test("no listId (no queue) clears what fx_cast added before", () => {
 
     assert.deepEqual(memory.apply(DEVICE_ID, undefined, "add", happyItem("b", "B")), [happyItem("b", "B")]);
 });
+
+test("playing an added video drops it and everything before it", () => {
+    const memory = new LoungeQueueMemory();
+    memory.apply(DEVICE_ID, LIST_ID, "add", happyItem("a", "A"));
+    memory.apply(DEVICE_ID, LIST_ID, "add", happyItem("b", "B"));
+    memory.apply(DEVICE_ID, LIST_ID, "add", happyItem("c", "C"));
+
+    assert.equal(memory.markPlaying(DEVICE_ID, "b"), true);
+    assert.deepEqual(memory.get(DEVICE_ID), [happyItem("c", "C")]);
+});
+
+test("playing a video fx_cast didn't add changes nothing", () => {
+    const memory = new LoungeQueueMemory();
+    memory.apply(DEVICE_ID, LIST_ID, "add", happyItem("a", "A"));
+
+    assert.equal(memory.markPlaying(DEVICE_ID, "zzz"), false);
+    assert.deepEqual(memory.get(DEVICE_ID), [happyItem("a", "A")]);
+});
+
+test("marking a device without memory changes nothing", () => {
+    const memory = new LoungeQueueMemory();
+
+    assert.equal(memory.markPlaying(DEVICE_ID, "a"), false);
+});

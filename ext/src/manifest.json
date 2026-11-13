@@ -13,6 +13,13 @@
             "strict_min_version": "64.0"
         }
     },
+    "commands": {
+        "_execute_browser_action": {
+            "suggested_key": {
+                "default": "Alt+Shift+C"
+            }
+        }
+    },
     "browser_action": {
         "theme_icons": [
             {

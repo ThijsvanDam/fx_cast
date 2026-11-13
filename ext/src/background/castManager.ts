@@ -27,6 +27,8 @@ import ReceiverSelector, {
 } from "./ReceiverSelector";
 
 import deviceManager from "./deviceManager";
+import { startAudioOnlyCast } from "./youtubeAudio";
+import { isYouTubeAudioOnlyUrl } from "../lib/youtubeUrl";
 import { ActionState, updateActionState } from "./action";
 
 type AnyPort = Port | TypedMessagePort<Message>;
@@ -839,6 +841,24 @@ async function loadSender(
         case ReceiverSelectorMediaType.Screen:
             await createMirroringPopup(selection.device);
             break;
+
+        case ReceiverSelectorMediaType.AudioOnly:
+            try {
+                const tab = await browser.tabs.get(contentContext.tabId);
+                if (!tab.url) throw new Error("Tab URL not found");
+
+                await startAudioOnlyCast(
+                    contentContext.tabId,
+                    tab.url,
+                    selection.device
+                );
+            } catch (err) {
+                logger.error("Audio-only cast failed", err);
+                receiverSelector?.showError(
+                    err instanceof Error ? err.message : String(err)
+                );
+            }
+            break;
     }
 }
 
@@ -945,6 +965,11 @@ async function getReceiverSelection(selectionOpts: {
         // Enable app media type if sender application is present
         defaultMediaType = ReceiverSelectorMediaType.App;
         availableMediaTypes |= ReceiverSelectorMediaType.App;
+    }
+
+    // Offer audio-only casting on YouTube video pages
+    if (pageInfo && isYouTubeAudioOnlyUrl(pageInfo.url)) {
+        availableMediaTypes |= ReceiverSelectorMediaType.AudioOnly;
     }
 
     // Disable mirroring media types if mirroring is not enabled

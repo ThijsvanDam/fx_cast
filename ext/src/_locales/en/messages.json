@@ -180,11 +180,6 @@
         "description": "Main context menu item title. Ellipsis indicates additional information required as it triggers opening of receiver selector."
     },
 
-    "contextListen": {
-        "message": "Listen on...",
-        "description": "YouTube context menu item that plays only the audio of the video on a speaker. Ellipsis indicates it opens the receiver selector."
-    },
-
     "contextAddToWhitelist": {
         "message": "Add to Whitelist",
         "description": "Top-level whitelist context menu item title."

@@ -161,6 +161,12 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
         });
     }
 
+    /** Shows an error in the receiver selector (no-op if closed). */
+    public showError(message: string) {
+        if (this.messagePortDisconnected) return;
+        this.messagePort?.postMessage({ subject: "popup:error", data: message });
+    }
+
     /** Closes the receiver selector (if open). */
     public async close() {
         if (this.windowId) {

@@ -5,7 +5,6 @@ import { stringify } from "../lib/utils";
 import * as menuIds from "../menuIds";
 
 import castManager from "./castManager";
-import { resolveYouTubeAudio } from "./youtubeAudio";
 
 const _ = browser.i18n.getMessage;
 
@@ -16,21 +15,10 @@ const URL_PATTERN_FILE = "file://*/*";
 const URL_PATTERNS_REMOTE = [URL_PATTERN_HTTP, URL_PATTERN_HTTPS];
 const URL_PATTERNS_ALL = [...URL_PATTERNS_REMOTE, URL_PATTERN_FILE];
 
-const URL_PATTERNS_YOUTUBE = [
-    "https://www.youtube.com/watch*",
-    "https://m.youtube.com/watch*",
-    "https://music.youtube.com/watch*",
-    "https://www.youtube.com/shorts/*"
-];
-
 type MenuId = string | number;
 
 let menuIdCast: MenuId;
 let menuIdCastMedia: MenuId;
-let menuIdListen: MenuId;
-
-/** Tabs with a "Listen on..." audio lookup in progress. */
-const listenTabsResolving = new Set<number>();
 let menuIdWhitelist: MenuId;
 let menuIdWhitelistRecommended: MenuId;
 
@@ -59,13 +47,6 @@ export async function initMenus() {
         targetUrlPatterns: opts.localMediaEnabled
             ? URL_PATTERNS_ALL
             : URL_PATTERNS_REMOTE
-    });
-
-    // YouTube "Listen on..." (audio-only) menu item
-    menuIdListen = browser.menus.create({
-        contexts: ["page", "video"],
-        title: _("contextListen"),
-        documentUrlPatterns: URL_PATTERNS_YOUTUBE
     });
 
     menuIdWhitelist = browser.menus.create({
@@ -217,59 +198,6 @@ async function onMenuClicked(
                 });
             }
             break;
-
-        case menuIdListen:
-            if (tab.url) {
-                await listenOnSpeaker(tab.id, tab.url);
-            }
-            break;
-    }
-}
-
-/**
- * Resolves the audio-only stream of a YouTube page and casts it with
- * the media sender. No target element is passed, so only audio
- * capability is requested and audio-only speakers are offered.
- */
-async function listenOnSpeaker(tabId: number, pageUrl: string) {
-    // Resolving takes a few seconds; ignore repeat clicks meanwhile
-    if (listenTabsResolving.has(tabId)) return;
-    listenTabsResolving.add(tabId);
-
-    const notificationId = await browser.notifications.create({
-        type: "basic",
-        title: "fx_cast",
-        message: "Finding audio stream...",
-        iconUrl: "icons/icon.svg"
-    });
-
-    try {
-        const audio = await resolveYouTubeAudio(pageUrl);
-
-        await browser.tabs.executeScript(tabId, {
-            code: stringify`
-                    window.mediaUrl = ${audio.url};
-                    window.mediaTitle = ${audio.title};
-                    window.mediaImageUrl = ${audio.thumbnail};
-                    window.mediaContentType = ${audio.contentType};
-                    window.pauseVideosOnLoad = true;
-                    window.targetElementId = undefined;
-                `
-        });
-        await browser.tabs.executeScript(tabId, {
-            file: "cast/senders/media.js"
-        });
-    } catch (err) {
-        logger.error("Listen on speaker failed", err);
-        browser.notifications.create({
-            type: "basic",
-            title: "fx_cast",
-            message: err instanceof Error ? err.message : String(err),
-            iconUrl: "icons/icon.svg"
-        });
-    } finally {
-        listenTabsResolving.delete(tabId);
-        browser.notifications.clear(notificationId);
     }
 }
 

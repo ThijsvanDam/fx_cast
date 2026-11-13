@@ -55,6 +55,8 @@ type ExtMessageDefinitions = {
         defaultMediaType?: ReceiverSelectorMediaType;
         availableMediaTypes?: ReceiverSelectorMediaType;
     };
+    /** Shows an error message in the selector popup. */
+    "popup:error": string;
 
     /**
      * Sent from the selector popup when a receiver has been

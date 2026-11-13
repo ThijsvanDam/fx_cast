@@ -7,6 +7,7 @@ import type { Message } from "../../messaging";
 import { AutoJoinPolicy, ReceiverAvailability } from "../sdk/enums";
 import type Session from "../sdk/Session";
 import type Media from "../sdk/media/Media";
+import type { ReceiverDevice } from "../../types";
 
 import cast, { ensureInit, CastPort } from "../export";
 
@@ -21,6 +22,8 @@ interface MediaSenderOpts {
     mediaContentType?: string;
     /** Pause the page's videos once the media has loaded. */
     pauseVideosOnLoad?: boolean;
+    /** Device already chosen by the user; skips receiver selection. */
+    receiverDevice?: ReceiverDevice;
 }
 
 export default class MediaSender {
@@ -36,6 +39,8 @@ export default class MediaSender {
     private mediaImageUrl?: string;
     private mediaContentType?: string;
     private pauseVideosOnLoad: boolean;
+    private receiverDevice?: ReceiverDevice;
+    private pausedVideos: HTMLVideoElement[] = [];
 
     private isLocalMedia = false;
     private isLocalMediaEnabled = false;
@@ -54,6 +59,7 @@ export default class MediaSender {
         this.mediaImageUrl = opts.mediaImageUrl;
         this.mediaContentType = opts.mediaContentType;
         this.pauseVideosOnLoad = opts.pauseVideosOnLoad ?? false;
+        this.receiverDevice = opts.receiverDevice;
 
         this.init();
     }
@@ -65,7 +71,10 @@ export default class MediaSender {
 
     private async init() {
         try {
-            this.port = await ensureInit({ contextTabId: this.contextTabId });
+            this.port = await ensureInit({
+                contextTabId: this.contextTabId,
+                receiverDevice: this.receiverDevice
+            });
         } catch (err) {
             logger.error("Failed to initialize cast API", err);
         }
@@ -284,18 +293,18 @@ export default class MediaSender {
             }
         }, err => {
             logger.error("Failed to load media on receiver", err);
-            if (this.pauseVideosOnLoad) {
-                window.alert(
-                    `fx_cast: the speaker could not play this audio (${err.code}).`
-                );
-            }
+            // Don't leave the user in silence: resume the page instead
+            this.pausedVideos.forEach(video => video.play());
         });
     }
 
     /** Pauses the page's videos so audio only plays on the speaker. */
     private pausePageVideos() {
-        const videos = Array.from(document.querySelectorAll("video"));
+        const videos = Array.from(document.querySelectorAll("video")).filter(
+            video => !video.paused
+        );
         videos.forEach(video => video.pause());
+        this.pausedVideos = videos;
         logger.info(`Paused ${videos.length} page video(s)`);
     }
 
@@ -415,7 +424,8 @@ if (window.location.protocol !== "moz-extension:") {
         mediaTitle: window_.mediaTitle,
         mediaImageUrl: window_.mediaImageUrl,
         mediaContentType: window_.mediaContentType,
-        pauseVideosOnLoad: window_.pauseVideosOnLoad
+        pauseVideosOnLoad: window_.pauseVideosOnLoad,
+        receiverDevice: window_.receiverDevice
     });
 
     // Globals persist between injections; don't leak into the next cast
@@ -423,4 +433,5 @@ if (window.location.protocol !== "moz-extension:") {
     delete window_.mediaImageUrl;
     delete window_.mediaContentType;
     delete window_.pauseVideosOnLoad;
+    delete window_.receiverDevice;
 }

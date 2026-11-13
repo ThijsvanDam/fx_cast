@@ -1,5 +1,7 @@
 import bridge from "../lib/bridge";
+import { stringify } from "../lib/utils";
 import type { Message } from "../messaging";
+import type { ReceiverDevice } from "../types";
 
 export interface ResolvedAudio {
     url: string;
@@ -10,6 +12,36 @@ export interface ResolvedAudio {
 
 /** yt-dlp itself times out after 30s; leave room for bridge startup. */
 const RESOLVE_TIMEOUT_MS = 35000;
+
+/**
+ * Resolves the audio-only stream of a YouTube page and plays it on the
+ * given device with the media sender, skipping receiver selection.
+ * Rejects with the resolve error.
+ */
+export async function startAudioOnlyCast(
+    tabId: number,
+    pageUrl: string,
+    device: ReceiverDevice
+): Promise<void> {
+    const audio = await resolveYouTubeAudio(pageUrl);
+
+    await browser.tabs.executeScript(tabId, {
+        code: stringify`
+                window.mediaUrl = ${audio.url};
+                window.mediaTitle = ${audio.title};
+                window.mediaImageUrl = ${audio.thumbnail};
+                window.mediaContentType = ${audio.contentType};
+                window.pauseVideosOnLoad = true;
+                window.receiverDevice = ${device};
+                window.targetElementId = undefined;
+            `,
+        frameId: 0
+    });
+    await browser.tabs.executeScript(tabId, {
+        file: "cast/senders/media.js",
+        frameId: 0
+    });
+}
 
 /**
  * Asks a temporary bridge instance to resolve the audio-only stream

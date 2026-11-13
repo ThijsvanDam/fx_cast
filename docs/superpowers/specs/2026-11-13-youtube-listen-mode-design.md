@@ -83,6 +83,14 @@ explicit actions, as icon + text buttons.
 - Considered: enabling queue for any app. Rejected: other apps (YouTube, Spotify)
   use private queues; standard `QUEUE_INSERT` only works for the default receiver.
 
+## Revision 2026-11-13 (c): queue view, remove, pause on queue
+- The receiver's expanded panel shows **Up next**: queue items after the
+  current one (`MEDIA_STATUS.items` after `currentItemId`), by title. Verified on
+  the Nest: Default Media Receiver reports items with full media metadata.
+- Each item has a remove (✕) button sending `QUEUE_REMOVE { itemIds: [id] }`.
+- Shown only for the Default Media Receiver and only with upcoming items.
+- **Add to queue** also pauses the tab's YouTube video (like audio-only cast).
+
 ## Constraints
 - Must stay compatible with extension 0.3.1 (bridge version 0.3.x).
 - Builds against the existing node16 `dns_sd_bindings.node` (see earlier build).

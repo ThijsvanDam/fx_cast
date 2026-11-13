@@ -77,6 +77,7 @@ export default class MediaSender {
             });
         } catch (err) {
             logger.error("Failed to initialize cast API", err);
+            this.reportAudioOnlyFailure("Failed to connect to the bridge");
         }
 
         window.addEventListener("beforeunload", async () => {
@@ -136,6 +137,9 @@ export default class MediaSender {
                 },
                 err => {
                     logger.error("Session request failed", err);
+                    this.reportAudioOnlyFailure(
+                        `Could not connect to the speaker (${err.code})`
+                    );
                 }
             );
         }
@@ -295,6 +299,18 @@ export default class MediaSender {
             logger.error("Failed to load media on receiver", err);
             // Don't leave the user in silence: resume the page instead
             this.pausedVideos.forEach(video => video.play());
+        });
+    }
+
+    /**
+     * Tells the background an audio-only cast (device chosen in the
+     * selector) failed, so the still-open selector can show it.
+     */
+    private reportAudioOnlyFailure(message: string) {
+        if (!this.receiverDevice) return;
+        browser.runtime.sendMessage({
+            subject: "main:audioOnlyCastFailed",
+            data: message
         });
     }
 

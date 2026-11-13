@@ -27,7 +27,7 @@ import ReceiverSelector, {
 } from "./ReceiverSelector";
 
 import deviceManager from "./deviceManager";
-import { startAudioOnlyCast } from "./youtubeAudio";
+import { AUDIO_ONLY_CAST_FAILED, startAudioOnlyCast } from "./youtubeAudio";
 import { isYouTubeAudioOnlyUrl } from "../lib/youtubeUrl";
 import { ActionState, updateActionState } from "./action";
 
@@ -322,6 +322,25 @@ const activeSessions = new Map<string, CastSession>();
 /** Keeps track of cast API instances and provides bridge messaging. */
 const castManager = new (class {
     async init() {
+        // Audio-only cast failures reported by the media sender
+        browser.runtime.onMessage.addListener(
+            (message: { subject?: string; data?: string }, sender) => {
+                if (message?.subject !== AUDIO_ONLY_CAST_FAILED) return;
+                if (
+                    !audioOnlyCast ||
+                    sender.tab?.id !== audioOnlyCast.contentContext.tabId
+                ) {
+                    return;
+                }
+
+                reportAudioOnlyError(
+                    audioOnlyCast.selector,
+                    message.data ?? "Cast failed",
+                    audioOnlyCast.contentContext
+                );
+            }
+        );
+
         // Handle incoming instance connections
         messaging.onConnect.addListener(async port => {
             if (port.name === "cast") {
@@ -843,23 +862,63 @@ async function loadSender(
             break;
 
         case ReceiverSelectorMediaType.AudioOnly:
-            try {
-                const tab = await browser.tabs.get(contentContext.tabId);
-                if (!tab.url) throw new Error("Tab URL not found");
-
-                await startAudioOnlyCast(
-                    contentContext.tabId,
-                    tab.url,
-                    selection.device
-                );
-            } catch (err) {
-                logger.error("Audio-only cast failed", err);
-                receiverSelector?.showError(
-                    err instanceof Error ? err.message : String(err)
-                );
-            }
+            await castAudioOnly(selection, contentContext);
             break;
     }
+}
+
+/** Selector and context of the audio-only cast in progress. */
+let audioOnlyCast: Nullable<{
+    selector: ReceiverSelector;
+    contentContext: ContentContext;
+}> = null;
+
+async function castAudioOnly(
+    selection: ReceiverSelection,
+    contentContext: ContentContext
+) {
+    // Bind to this selector; a newer one must not receive our errors
+    const selector = receiverSelector;
+    if (selector) audioOnlyCast = { selector, contentContext };
+
+    try {
+        const tab = await browser.tabs.get(contentContext.tabId);
+        if (!tab.url) throw new Error("Tab URL not found");
+
+        await startAudioOnlyCast(
+            contentContext.tabId,
+            tab.url,
+            selection.device,
+            () => !!selector?.isOpen
+        );
+    } catch (err) {
+        logger.error("Audio-only cast failed", err);
+        reportAudioOnlyError(
+            selector,
+            err instanceof Error ? err.message : String(err),
+            contentContext
+        );
+    }
+}
+
+/**
+ * Shows an audio-only cast error in its selector and lets the user
+ * retry: the selection promise has already settled, so later
+ * selections from the same selector are handled here.
+ */
+function reportAudioOnlyError(
+    selector: Nullable<ReceiverSelector> | undefined,
+    message: string,
+    contentContext: ContentContext
+) {
+    if (!selector?.isOpen) return;
+
+    selector.showError(message);
+    selector.addEventListener(
+        "selected",
+        ev => loadSender(ev.detail, contentContext),
+        { once: true }
+    );
 }
 
 /**

@@ -21,9 +21,13 @@ const RESOLVE_TIMEOUT_MS = 35000;
 export async function startAudioOnlyCast(
     tabId: number,
     pageUrl: string,
-    device: ReceiverDevice
+    device: ReceiverDevice,
+    shouldContinue: () => boolean = () => true
 ): Promise<void> {
     const audio = await resolveYouTubeAudio(pageUrl);
+
+    // User may have closed the selector (cancelled) while resolving
+    if (!shouldContinue()) return;
 
     await browser.tabs.executeScript(tabId, {
         code: stringify`
@@ -42,6 +46,12 @@ export async function startAudioOnlyCast(
         frameId: 0
     });
 }
+
+/**
+ * Sent from the media sender (content script) when an audio-only cast
+ * fails after injection, so the selector can show the error.
+ */
+export const AUDIO_ONLY_CAST_FAILED = "main:audioOnlyCastFailed";
 
 /**
  * Asks a temporary bridge instance to resolve the audio-only stream

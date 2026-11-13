@@ -4,7 +4,8 @@
         "build": "node bin/build.js",
         "package": "node bin/build.js --package",
         "install-manifest": "node bin/install-manifest.js",
-        "remove-manifest": "node bin/install-manifest.js --remove"
+        "remove-manifest": "node bin/install-manifest.js --remove",
+        "test": "node --test \"test/**/*.test.ts\""
     },
     "dependencies": {
         "bplist-creator": "^0.1.0",

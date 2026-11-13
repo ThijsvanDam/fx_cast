@@ -48,6 +48,7 @@
     $: application = device.status?.applications?.[0];
     /** Whether the receiver is playing something (not idle). */
     $: isBusy = !!application && !application.isIdleScreen;
+    $: isPlaying = device.mediaStatus?.playerState === "PLAYING";
     /** Title of the media currently playing (if known). */
     $: mediaTitle = device.mediaStatus?.media?.metadata?.title;
     /** Upcoming queue items (Default Media Receiver only). */
@@ -425,7 +426,12 @@
     });
 </script>
 
-<li class="receiver" bind:this={receiverElement} on:contextmenu={onContextMenu}>
+<li
+    class="receiver"
+    class:receiver--playing={isBusy}
+    bind:this={receiverElement}
+    on:contextmenu={onContextMenu}
+>
     <img
         class="receiver__icon"
         src="icons/{device.capabilities & ReceiverDeviceCapabilities.VIDEO_OUT
@@ -440,15 +446,15 @@
             {device.friendlyName}
         </div>
         {#if application && !application.isIdleScreen}
-            <div class="receiver__status">
-                <span class="receiver__app-name">
-                    {application.displayName}
+            <div class="receiver__status" title={application.displayName}>
+                <span class="eq" class:eq--paused={!isPlaying} aria-hidden="true">
+                    <i /><i /><i />
                 </span>
-                {#if mediaTitle}
-                    · {mediaTitle}
-                {:else if application.statusText !== application.displayName}
-                    · {application.statusText}
-                {/if}
+                <span class="receiver__now-playing">
+                    {mediaTitle ||
+                        application.statusText ||
+                        application.displayName}
+                </span>
             </div>
         {/if}
     </div>

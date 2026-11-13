@@ -1,0 +1,463 @@
+/*
+ * "Evening living room" theme for the receiver selector.
+ * Speakers are rooms; a playing speaker has its lamp on.
+ * Loaded after index.css and overrides the Photon look.
+ */
+
+:root {
+    --cosy-bg: #eef0e8;
+    --cosy-card: #fafbf6;
+    --cosy-card-border: #dfe2d6;
+    --cosy-ink: #2e3328;
+    --cosy-muted: #6e7465;
+    --cosy-lamp: #e8a33d;
+    --cosy-lamp-ink: #3a2a0c;
+    --cosy-lamp-soft: rgba(232, 163, 61, 0.16);
+    --cosy-lamp-glow: rgba(232, 163, 61, 0.38);
+    --cosy-soft-button: #e6e9de;
+    --cosy-soft-button-hover: #dce0d2;
+    --cosy-danger-soft: #f6e1d9;
+    --cosy-danger-ink: #8a3a1f;
+    --cosy-focus: #8fa37f;
+
+    --cosy-radius-card: 16px;
+    --cosy-radius-panel: 12px;
+    --cosy-ease: cubic-bezier(0.22, 0.8, 0.3, 1);
+
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --cosy-bg: #1c211e;
+        --cosy-card: #262d28;
+        --cosy-card-border: #323a34;
+        --cosy-ink: #ecebe1;
+        --cosy-muted: #9aa196;
+        --cosy-lamp: #f2b95a;
+        --cosy-lamp-ink: #2b1d05;
+        --cosy-lamp-soft: rgba(242, 185, 90, 0.12);
+        --cosy-lamp-glow: rgba(242, 185, 90, 0.3);
+        --cosy-soft-button: #313a33;
+        --cosy-soft-button-hover: #3a443c;
+        --cosy-danger-soft: #4a2d24;
+        --cosy-danger-ink: #f3c2ae;
+        --cosy-focus: #a9bd98;
+
+        color-scheme: dark;
+    }
+}
+
+/* ---------- Base ---------- */
+
+body {
+    --font-size: 13px;
+    background-color: var(--cosy-bg);
+    color: var(--cosy-ink);
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    font-size: var(--font-size);
+    line-height: 1.4;
+}
+
+#root {
+    gap: 12px;
+    padding: 14px 14px 16px;
+}
+
+button,
+select {
+    font: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--cosy-focus);
+    outline-offset: 2px;
+}
+
+/* Buttons: soft pills by default */
+button {
+    background-color: var(--cosy-soft-button);
+    border: none;
+    border-radius: 999px;
+    color: var(--cosy-ink);
+    cursor: pointer;
+    min-height: 30px;
+    padding: 0 14px;
+    transition: background-color 160ms var(--cosy-ease),
+        transform 120ms var(--cosy-ease), box-shadow 160ms var(--cosy-ease);
+}
+button:hover:not(:disabled) {
+    background-color: var(--cosy-soft-button-hover);
+}
+button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+button.ghost {
+    background-color: transparent;
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0;
+}
+button.ghost:hover:not(:disabled) {
+    background-color: var(--cosy-soft-button);
+}
+
+/* ---------- Banners ---------- */
+
+.banner {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: var(--cosy-radius-panel);
+    font-size: 12.5px;
+    padding: 10px 12px;
+}
+.banner--warn {
+    background-color: var(--cosy-danger-soft);
+    border-color: transparent;
+    color: var(--cosy-danger-ink);
+}
+.banner--info {
+    background-color: var(--cosy-lamp-soft);
+    border-color: transparent;
+}
+
+/* ---------- "Cast [app] to" ---------- */
+
+.media-type-select {
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    padding: 2px 2px 0;
+}
+.media-type-select .select-wrapper select,
+.media-type-select__dropdown {
+    appearance: none;
+    /* The wrapper (photon-widgets) draws the dropdown arrow */
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: 999px;
+    color: var(--cosy-ink);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 32px;
+    padding: 0 32px 0 14px;
+}
+
+/* ---------- Video and audio | Audio only ---------- */
+
+.audio-mode-select {
+    background-color: var(--cosy-soft-button);
+    border: none;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 2px;
+    margin: 0;
+    padding: 3px;
+    width: fit-content;
+}
+.audio-mode-select label {
+    border-radius: 999px;
+    color: var(--cosy-muted);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 5px 14px;
+    position: relative;
+    transition: background-color 200ms var(--cosy-ease),
+        color 200ms var(--cosy-ease), box-shadow 200ms var(--cosy-ease);
+}
+.audio-mode-select input {
+    /* Visually hidden, still keyboard reachable */
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+}
+.audio-mode-select label:has(input:checked) {
+    background-color: var(--cosy-card);
+    box-shadow: 0 1px 3px rgba(46, 51, 40, 0.14);
+    color: var(--cosy-ink);
+}
+.audio-mode-select label:has(input:focus-visible) {
+    outline: 2px solid var(--cosy-focus);
+    outline-offset: 1px;
+}
+.audio-mode-select label:has(input:disabled) {
+    cursor: default;
+    opacity: 0.45;
+}
+
+/* ---------- Speakers (rooms) ---------- */
+
+.receiver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+.receiver-list__not-found {
+    color: var(--cosy-muted);
+    padding: 24px 8px;
+    text-align: center;
+}
+
+.receiver {
+    background-color: var(--cosy-card);
+    border: 1px solid var(--cosy-card-border);
+    border-radius: var(--cosy-radius-card);
+    gap: 10px 12px;
+    min-height: 0;
+    padding: 12px 12px 12px 14px;
+    transition: background-color 600ms var(--cosy-ease),
+        border-color 600ms var(--cosy-ease), box-shadow 600ms var(--cosy-ease);
+}
+.receiver:not(:last-child) {
+    border-bottom: 1px solid var(--cosy-card-border);
+}
+
+/* Lamp on: the speaker is playing */
+.receiver--playing {
+    background: radial-gradient(
+            120% 140% at 0% 0%,
+            var(--cosy-lamp-soft),
+            transparent 60%
+        ),
+        var(--cosy-card);
+    border-color: var(--cosy-lamp-glow);
+    box-shadow: 0 6px 22px -10px var(--cosy-lamp-glow);
+    animation: cosy-lamp 5s ease-in-out infinite;
+}
+.receiver--playing:not(:last-child) {
+    border-bottom-color: var(--cosy-lamp-glow);
+}
+
+@keyframes cosy-lamp {
+    0%,
+    100% {
+        box-shadow: 0 6px 22px -10px var(--cosy-lamp-glow);
+    }
+    50% {
+        box-shadow: 0 8px 28px -8px var(--cosy-lamp-glow);
+    }
+}
+
+.receiver__icon {
+    background-color: var(--cosy-soft-button);
+    border-radius: 12px;
+    box-sizing: content-box;
+    padding: 8px;
+    transition: background-color 600ms var(--cosy-ease);
+}
+.receiver--playing .receiver__icon {
+    background-color: var(--cosy-lamp);
+}
+@media (prefers-color-scheme: dark) {
+    /* Device icons turn light in dark mode; keep them readable */
+    .receiver--playing .receiver__icon {
+        background-color: rgba(242, 185, 90, 0.28);
+        box-shadow: inset 0 0 0 1px rgba(242, 185, 90, 0.5);
+    }
+}
+
+.receiver__name {
+    font-size: 15px;
+    font-weight: 600;
+}
+.receiver__status {
+    align-items: center;
+    color: var(--cosy-muted);
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+}
+.receiver__app-name {
+    font-weight: 500;
+}
+.receiver__now-playing {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Equaliser bars next to what's playing */
+.eq {
+    align-items: flex-end;
+    display: inline-flex;
+    flex: none;
+    gap: 2px;
+    height: 11px;
+}
+.eq i {
+    background-color: var(--cosy-lamp);
+    border-radius: 2px;
+    display: block;
+    height: 100%;
+    transform-origin: bottom;
+    width: 3px;
+    animation: cosy-eq 1.1s ease-in-out infinite;
+}
+.eq i:nth-child(2) {
+    animation-delay: -0.45s;
+    animation-duration: 0.9s;
+}
+.eq i:nth-child(3) {
+    animation-delay: -0.2s;
+    animation-duration: 1.3s;
+}
+.eq--paused i {
+    animation-play-state: paused;
+    transform: scaleY(0.35);
+}
+
+@keyframes cosy-eq {
+    0%,
+    100% {
+        transform: scaleY(0.3);
+    }
+    50% {
+        transform: scaleY(1);
+    }
+}
+
+/* Actions sit on their own line under the name */
+.receiver__actions {
+    flex-basis: 100%;
+    gap: 6px;
+    margin-inline-start: 0;
+    order: 1;
+}
+.receiver__expanded {
+    order: 2;
+}
+.receiver__queue {
+    order: 3;
+}
+
+.receiver__action {
+    font-weight: 600;
+    gap: 6px;
+}
+.receiver__cast-button,
+.receiver__stop-button {
+    min-width: 0;
+}
+/* The main action: cast / replace */
+.receiver__cast-button {
+    background-color: var(--cosy-lamp);
+    color: var(--cosy-lamp-ink);
+}
+.receiver__cast-button:hover:not(:disabled) {
+    background-color: var(--cosy-lamp);
+    box-shadow: 0 4px 14px -6px var(--cosy-lamp-glow);
+}
+.receiver__cast-button img {
+    filter: brightness(0.35) sepia(1) saturate(2);
+}
+/* Stop is quiet */
+.receiver__stop-button {
+    background-color: transparent;
+    color: var(--cosy-muted);
+}
+.receiver__stop-button:hover:not(:disabled) {
+    background-color: var(--cosy-danger-soft);
+    color: var(--cosy-danger-ink);
+}
+
+.receiver__expand-button {
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 999px;
+    transition: transform 250ms var(--cosy-ease);
+}
+
+/* Playback panel + queue slide open */
+.receiver__expanded,
+.receiver__queue {
+    animation: cosy-open 260ms var(--cosy-ease);
+}
+@keyframes cosy-open {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.receiver__expanded {
+    background-color: var(--cosy-bg);
+    border-radius: var(--cosy-radius-panel);
+    box-sizing: border-box;
+    padding: 10px 12px;
+}
+
+/* ---------- Up next ---------- */
+
+.receiver__queue {
+    background-color: var(--cosy-bg);
+    border-radius: var(--cosy-radius-panel);
+    box-sizing: border-box;
+    padding: 10px 8px 6px 12px;
+}
+.receiver__queue-heading {
+    color: var(--cosy-ink);
+    font-weight: 600;
+    margin-block-end: 4px;
+}
+.receiver__queue-item {
+    border-radius: 8px;
+    min-height: 30px;
+    padding-inline-end: 2px;
+}
+.receiver__queue-item::before {
+    color: var(--cosy-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 1.2em;
+}
+.receiver__queue-remove {
+    opacity: 0.55;
+}
+.receiver__queue-item:hover .receiver__queue-remove,
+.receiver__queue-remove:focus-visible {
+    opacity: 1;
+}
+
+/* ---------- Media panel ---------- */
+
+.media__title {
+    font-weight: 600;
+}
+.media__subtitle,
+.media__remaining-time {
+    color: var(--cosy-muted);
+}
+.media__image {
+    border-radius: 10px;
+}
+
+.slider {
+    --slider-fill-color: var(--cosy-lamp);
+    --slider-track-color: var(--cosy-card-border);
+    --slider-flare-color: var(--cosy-card);
+}
+
+/* ---------- Respect reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .eq i {
+        transform: scaleY(0.6);
+    }
+}

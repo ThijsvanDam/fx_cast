@@ -1162,13 +1162,18 @@ function createSelector() {
                 ) as unknown as SenderMediaMessage
             );
 
-            // Audio continues on the speaker; pause it in the tab
+            // Audio continues on the speaker; pause it in the tab. The
+            // item is already queued, so a failed pause is not an error.
             const tabId = selector.pageInfo?.tabId;
             if (tabId !== undefined) {
-                await browser.tabs.executeScript(tabId, {
-                    code: 'document.querySelectorAll("video").forEach(video => video.pause());',
-                    frameId: 0
-                });
+                try {
+                    await browser.tabs.executeScript(tabId, {
+                        code: 'document.querySelectorAll("video").forEach(video => video.pause());',
+                        frameId: 0
+                    });
+                } catch (err) {
+                    logger.error("Failed to pause tab after queueing", err);
+                }
             }
 
             selector.close();

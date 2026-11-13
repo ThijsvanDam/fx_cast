@@ -185,6 +185,7 @@ body {
     margin-block-end: 0.25em;
 }
 .receiver__queue-list {
+    counter-reset: queue;
     list-style: none;
     margin: 0;
     padding-inline-start: 0.5em;
@@ -201,8 +202,11 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.receiver__queue-item {
+    counter-increment: queue;
+}
 .receiver__queue-item::before {
-    content: counter(list-item) ".";
+    content: counter(queue) ".";
     color: var(--secondary-color);
 }
 

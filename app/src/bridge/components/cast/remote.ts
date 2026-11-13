@@ -49,6 +49,19 @@ export default class Remote extends CastClient {
 
     sendMediaMessage(message: SenderMediaMessage) {
         this.transportClient?.sendMediaMessage(message);
+
+        // Queue changes aren't always broadcast with the item list;
+        // request a full status so the queue view stays current.
+        if (message.type.startsWith("QUEUE_")) {
+            this.requestMediaStatus();
+        }
+    }
+
+    private requestMediaStatus() {
+        this.transportClient?.sendMediaMessage({
+            type: "GET_STATUS",
+            requestId: 0
+        });
     }
 
     /**
@@ -113,6 +126,12 @@ export default class Remote extends CastClient {
      * results in a `MEDIA_STATUS` response.
      */
     private onMediaMessage(message: ReceiverMediaMessage) {
+        // Receiver announces queue changes separately; fetch the new list
+        if ((message.type as string) === "QUEUE_CHANGE") {
+            this.requestMediaStatus();
+            return;
+        }
+
         if (message.type !== "MEDIA_STATUS") {
             return;
         }

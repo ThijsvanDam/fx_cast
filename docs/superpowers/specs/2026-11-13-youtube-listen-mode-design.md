@@ -47,6 +47,25 @@ has no screen. Later: Sonos speakers, which don't speak Cast at all.
 - If Sonos rejects YouTube's long signed URL, proxy it via the bridge's existing
   media server.
 
+## Revision 2026-11-13: "Audio only" in the receiver selector
+Feedback after trying step 1: start listen mode from the normal cast popup, not
+a separate context menu, and show progress inside the popup, not as a notification.
+
+- Receiver selector media-type dropdown gets a new option **Audio only**
+  (new `ReceiverSelectorMediaType` flag), listed between the app option and
+  Screen. Only offered when the tab is a YouTube watch/shorts page.
+- With Audio only selected, the device list shows every device with
+  `AUDIO_OUT` capability (Nest Audio *and* TVs).
+- Clicking a device's Cast button: the button shows the existing connecting
+  state while the bridge resolves the audio via yt-dlp, then the existing
+  media sender plays it (resume position, page pause as in step 1).
+- Errors (yt-dlp missing, private video, timeout, speaker load failure) are
+  shown inside the popup; no browser notifications or alerts.
+- The "Listen on..." context menu and its notifications are removed.
+- Considered: an "Audio only" checkbox. Rejected because the dropdown already
+  selects *what* to cast, and a checkbox would sit beside Screen where it means
+  nothing.
+
 ## Constraints
 - Must stay compatible with extension 0.3.1 (bridge version 0.3.x).
 - Builds against the existing node16 `dns_sd_bindings.node` (see earlier build).

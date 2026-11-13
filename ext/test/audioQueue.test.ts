@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 
 import {
     canQueueAudio,
-    createQueueInsertMessage
+    createQueueInsertMessage,
+    getUpNext
 } from "../src/lib/audioQueue.ts";
 
 const DEFAULT_MEDIA_RECEIVER = "CC1AD845";
@@ -140,4 +141,54 @@ test("can queue while paused", () => {
         }),
         true
     );
+});
+
+function happyQueueItem(itemId: number, title?: string) {
+    return { itemId, media: { metadata: { title } } };
+}
+
+function happyQueueStatus(
+    currentItemId: number | undefined = 1,
+    items = [
+        happyQueueItem(1, "First"),
+        happyQueueItem(2, "Second"),
+        happyQueueItem(3, "Third")
+    ]
+) {
+    return { currentItemId, items };
+}
+
+test("up next lists items after the current one", () => {
+    assert.deepEqual(getUpNext(happyQueueStatus(1)), [
+        { itemId: 2, title: "Second" },
+        { itemId: 3, title: "Third" }
+    ]);
+});
+
+test("up next is empty on the last item", () => {
+    assert.deepEqual(getUpNext(happyQueueStatus(3)), []);
+});
+
+test("up next is empty without a current item", () => {
+    assert.deepEqual(
+        getUpNext({ ...happyQueueStatus(), currentItemId: undefined }),
+        []
+    );
+});
+
+test("up next is empty when the current item is not in the queue", () => {
+    assert.deepEqual(getUpNext(happyQueueStatus(99)), []);
+});
+
+test("up next names items without a title Untitled", () => {
+    assert.deepEqual(
+        getUpNext(
+            happyQueueStatus(1, [happyQueueItem(1, "First"), happyQueueItem(2)])
+        ),
+        [{ itemId: 2, title: "Untitled" }]
+    );
+});
+
+test("up next is empty without a status", () => {
+    assert.deepEqual(getUpNext(undefined), []);
 });

@@ -62,3 +62,30 @@ export function createQueueInsertMessage(
         ] as object[]
     };
 }
+
+interface QueueStatus {
+    currentItemId?: number;
+    items?: {
+        itemId?: number;
+        media?: { metadata?: { title?: string } };
+    }[];
+}
+
+/** Queue items after the currently playing one, in play order. */
+export function getUpNext(
+    status?: QueueStatus
+): { itemId: number; title: string }[] {
+    const items = status?.items ?? [];
+    const currentIndex = items.findIndex(
+        item => item.itemId === status?.currentItemId
+    );
+    if (status?.currentItemId === undefined || currentIndex === -1) return [];
+
+    return items
+        .slice(currentIndex + 1)
+        .filter(item => item.itemId !== undefined)
+        .map(item => ({
+            itemId: item.itemId as number,
+            title: item.media?.metadata?.title || "Untitled"
+        }));
+}

@@ -269,14 +269,12 @@ export default class MediaSender {
             }
         }
 
+        if (this.pauseVideosOnLoad) {
+            this.pausePageVideos();
+        }
+
         this.session?.loadMedia(loadRequest, async media => {
             this.media = media;
-
-            if (this.pauseVideosOnLoad) {
-                document
-                    .querySelectorAll("video")
-                    .forEach(video => video.pause());
-            }
 
             if (
                 (await options.get("mediaSyncElement")) &&
@@ -292,6 +290,13 @@ export default class MediaSender {
                 );
             }
         });
+    }
+
+    /** Pauses the page's videos so audio only plays on the speaker. */
+    private pausePageVideos() {
+        const videos = Array.from(document.querySelectorAll("video"));
+        videos.forEach(video => video.pause());
+        logger.info(`Paused ${videos.length} page video(s)`);
     }
 
     private addMediaElementListeners(mediaElement: HTMLMediaElement) {

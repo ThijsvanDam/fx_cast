@@ -27,7 +27,13 @@ import ReceiverSelector, {
 } from "./ReceiverSelector";
 
 import deviceManager from "./deviceManager";
-import { AUDIO_ONLY_CAST_FAILED, startAudioOnlyCast } from "./youtubeAudio";
+import {
+    AUDIO_ONLY_CAST_FAILED,
+    resolveYouTubeAudio,
+    startAudioOnlyCast
+} from "./youtubeAudio";
+import { createQueueInsertMessage } from "../lib/audioQueue";
+import type { SenderMediaMessage } from "../cast/sdk/types";
 import { isYouTubeAudioOnlyUrl } from "../lib/youtubeUrl";
 import { ActionState, updateActionState } from "./action";
 
@@ -1132,6 +1138,37 @@ function createSelector() {
         deviceManager.sendMediaMessage(ev.detail.deviceId, ev.detail.message);
     selector.addEventListener("mediaMessage", onMediaMessage);
 
+    /** Adds the page's YouTube audio to the receiver's queue. */
+    const onQueue = async (ev: CustomEvent<{ device: ReceiverDevice }>) => {
+        try {
+            const pageUrl = selector.pageInfo?.url;
+            if (!pageUrl) throw new Error("Page URL not found");
+
+            const audio = await resolveYouTubeAudio(pageUrl);
+
+            const mediaSessionId = deviceManager
+                .getDevices()
+                .find(device => device.id === ev.detail.device.id)
+                ?.mediaStatus?.mediaSessionId;
+            if (mediaSessionId === undefined) {
+                throw new Error("Nothing is playing on this device anymore");
+            }
+
+            deviceManager.sendMediaMessage(
+                ev.detail.device.id,
+                createQueueInsertMessage(
+                    audio,
+                    mediaSessionId
+                ) as unknown as SenderMediaMessage
+            );
+            selector.close();
+        } catch (err) {
+            logger.error("Add to queue failed", err);
+            selector.showError(err instanceof Error ? err.message : String(err));
+        }
+    };
+    selector.addEventListener("queue", onQueue);
+
     // Update selector data whenever devices change/update
     const onDeviceChange = () => {
         const connectedSessionIds: string[] = [];
@@ -1168,6 +1205,7 @@ function createSelector() {
             selector.removeEventListener("stop", onStop);
             selector.removeEventListener("receiverMessage", onReceiverMessage);
             selector.removeEventListener("mediaMessage", onMediaMessage);
+            selector.removeEventListener("queue", onQueue);
         },
         { once: true }
     );

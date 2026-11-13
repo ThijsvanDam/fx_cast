@@ -55,6 +55,11 @@ type ExtMessageDefinitions = {
         defaultMediaType?: ReceiverSelectorMediaType;
         availableMediaTypes?: ReceiverSelectorMediaType;
     };
+    /**
+     * Sent from the selector popup to add audio-only YouTube audio to
+     * a receiver's queue.
+     */
+    "main:receiverQueueSelected": { device: ReceiverDevice };
     /** Shows an error message in the selector popup. */
     "popup:error": string;
 

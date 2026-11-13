@@ -35,6 +35,7 @@ interface ReceiverSelectorEvents {
     close: void;
     receiverMessage: ReceiverSelectorReceiverMessage;
     mediaMessage: ReceiverSelectorMediaMessage;
+    queue: { device: ReceiverDevice };
 }
 
 /**
@@ -237,6 +238,12 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
                 this.wasReceiverSelected = true;
                 this.dispatchEvent(
                     new CustomEvent("selected", { detail: message.data })
+                );
+                break;
+
+            case "main:receiverQueueSelected":
+                this.dispatchEvent(
+                    new CustomEvent("queue", { detail: message.data })
                 );
                 break;
 

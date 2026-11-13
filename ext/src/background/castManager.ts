@@ -1051,9 +1051,14 @@ async function getReceiverSelection(selectionOpts: {
     await deviceManager.init();
 
     return new Promise(async (resolve, reject) => {
-        // Close an existing open selector
+        // Close an existing open selector. A failure here must not
+        // leave the promise (and the page's session request) hanging.
         if (receiverSelector?.isOpen) {
-            await receiverSelector.close();
+            try {
+                await receiverSelector.close();
+            } catch (err) {
+                logger.error("Failed to close previous selector", err);
+            }
         }
         receiverSelector = createSelector();
 
@@ -1080,13 +1085,20 @@ async function getReceiverSelection(selectionOpts: {
             { once: true }
         );
 
-        receiverSelector.open({
-            devices: deviceManager.getDevices(),
-            defaultMediaType,
-            availableMediaTypes,
-            appInfo,
-            pageInfo
-        });
+        // Opening errors were previously unhandled, leaving callers
+        // (e.g. a page's cast button) waiting forever
+        receiverSelector
+            .open({
+                devices: deviceManager.getDevices(),
+                defaultMediaType,
+                availableMediaTypes,
+                appInfo,
+                pageInfo
+            })
+            .catch(err => {
+                logger.error("Failed to open receiver selector", err);
+                reject(err);
+            });
     });
 }
 

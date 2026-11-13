@@ -66,6 +66,23 @@ a separate context menu, and show progress inside the popup, not as a notificati
   selects *what* to cast, and a checkbox would sit beside Screen where it means
   nothing.
 
+## Revision 2026-11-13 (b): busy receivers — now playing, Replace / Add to queue / Stop
+Feedback: "Cast" next to "Stop" is unclear. Show what is playing, and give
+explicit actions, as icon + text buttons.
+
+- Busy receiver row shows the current media title (falls back to the app name).
+- Buttons, each an icon plus label: **Replace** (casts over what plays),
+  **Add to queue**, **Stop**. Idle receivers keep a single **Cast** button.
+- **Add to queue** is offered only when casting Audio only *and* the receiver
+  is playing via the Default Media Receiver (`CC1AD845`) with a media session.
+  It resolves the audio (same as audio-only cast) and sends a standard Cast
+  `QUEUE_INSERT` to that media session; the item plays after the current one.
+  Errors show in the selector; on success the selector closes.
+- Out of scope here (step 2, separate design): queueing onto the YouTube app's
+  own queue via the YouTube Lounge API. Spotify queueing is not planned.
+- Considered: enabling queue for any app. Rejected: other apps (YouTube, Spotify)
+  use private queues; standard `QUEUE_INSERT` only works for the default receiver.
+
 ## Constraints
 - Must stay compatible with extension 0.3.1 (bridge version 0.3.x).
 - Builds against the existing node16 `dns_sd_bindings.node` (see earlier build).

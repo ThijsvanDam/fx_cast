@@ -513,6 +513,20 @@ const castManager = new (class {
      * Gets a receiver selection and loads the appropriate sender for a
      * given context.
      */
+    /** Whether the receiver selector window is open. */
+    isSelectorOpen() {
+        return !!receiverSelector?.isOpen;
+    }
+
+    /** Closes the receiver selector (cancels a pending selection). */
+    async closeSelector() {
+        try {
+            await receiverSelector?.close();
+        } catch (err) {
+            logger.error("Failed to close receiver selector", err);
+        }
+    }
+
     async triggerCast(tabId: number, frameId = 0) {
         let selection: Nullable<ReceiverSelection>;
         try {

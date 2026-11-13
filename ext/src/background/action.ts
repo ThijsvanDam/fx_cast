@@ -49,7 +49,13 @@ export function initAction() {
 
     updateActionState(ActionState.Default);
 
+    // Toolbar button and keyboard shortcut toggle the picker
     browser.browserAction.onClicked.addListener(async tab => {
+        if (castManager.isSelectorOpen()) {
+            castManager.closeSelector();
+            return;
+        }
+
         if (tab.id === undefined) {
             logger.error("Tab ID not found in browser action handler.");
             return;

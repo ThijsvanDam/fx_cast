@@ -33,6 +33,7 @@ import {
     startAudioOnlyCast
 } from "./youtubeAudio";
 import { createQueueInsertMessage } from "../lib/audioQueue";
+import { cleanYouTubeTitle, getYouTubeVideoId } from "../lib/youtubeVideo";
 import type { SenderMediaMessage } from "../cast/sdk/types";
 import { isYouTubeAudioOnlyUrl } from "../lib/youtubeUrl";
 import { ActionState, updateActionState } from "./action";
@@ -1196,6 +1197,55 @@ function createSelector() {
     };
     selector.addEventListener("queue", onQueue);
 
+    /** Queue actions for the YouTube app on a receiver (Lounge API). */
+    const onYouTubeQueue = async (
+        ev: CustomEvent<{
+            device: ReceiverDevice;
+            action: "add" | "playNext" | "remove";
+            videoId?: string;
+            title?: string;
+        }>
+    ) => {
+        const { device, action } = ev.detail;
+        try {
+            let { videoId, title = "YouTube video" } = ev.detail;
+            const tabId = selector.pageInfo?.tabId;
+
+            if (action !== "remove") {
+                videoId = getYouTubeVideoId(selector.pageInfo?.url ?? "") ?? undefined;
+                if (!videoId || tabId === undefined) {
+                    throw new Error("This page isn't a YouTube video");
+                }
+                title = cleanYouTubeTitle((await browser.tabs.get(tabId)).title);
+            }
+            if (!videoId) throw new Error("No video to remove");
+
+            await deviceManager.youtubeQueueCommand(
+                device.id,
+                action,
+                videoId,
+                title
+            );
+
+            if (action !== "remove" && tabId !== undefined) {
+                // Plays on the TV later; pause it in the tab
+                try {
+                    await browser.tabs.executeScript(tabId, {
+                        code: 'document.querySelectorAll("video").forEach(video => video.pause());',
+                        frameId: 0
+                    });
+                } catch (err) {
+                    logger.error("Failed to pause tab after queueing", err);
+                }
+                selector.close();
+            }
+        } catch (err) {
+            logger.error("YouTube queue action failed", err);
+            selector.showError(err instanceof Error ? err.message : String(err));
+        }
+    };
+    selector.addEventListener("youtubeQueue", onYouTubeQueue);
+
     // Update selector data whenever devices change/update
     const onDeviceChange = () => {
         const connectedSessionIds: string[] = [];
@@ -1216,6 +1266,7 @@ function createSelector() {
     deviceManager.addEventListener("deviceDown", onDeviceChange);
     deviceManager.addEventListener("deviceUpdated", onDeviceChange);
     deviceManager.addEventListener("deviceMediaUpdated", onDeviceChange);
+    deviceManager.addEventListener("youtubeQueueUpdated", onDeviceChange);
 
     // Cleanup listeners
     selector.addEventListener(
@@ -1233,6 +1284,11 @@ function createSelector() {
             selector.removeEventListener("receiverMessage", onReceiverMessage);
             selector.removeEventListener("mediaMessage", onMediaMessage);
             selector.removeEventListener("queue", onQueue);
+            selector.removeEventListener("youtubeQueue", onYouTubeQueue);
+            deviceManager.removeEventListener(
+                "youtubeQueueUpdated",
+                onDeviceChange
+            );
         },
         { once: true }
     );

@@ -60,6 +60,13 @@ type ExtMessageDefinitions = {
      * a receiver's queue.
      */
     "main:receiverQueueSelected": { device: ReceiverDevice };
+    /** Sent from the selector popup for YouTube app queue actions. */
+    "main:youtubeQueueSelected": {
+        device: ReceiverDevice;
+        action: "add" | "playNext" | "remove";
+        videoId?: string;
+        title?: string;
+    };
     /** Shows an error message in the selector popup. */
     "popup:error": string;
 

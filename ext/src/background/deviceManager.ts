@@ -20,6 +20,7 @@ interface EventMap {
     deviceDown: { deviceId: string };
     deviceUpdated: { deviceId: string; status: ReceiverStatus };
     deviceMediaUpdated: { deviceId: string; status: MediaStatus };
+    youtubeQueueUpdated: { deviceId: string };
 
     applicationFound: { deviceId: string; appId: string };
     applicationClosed: { deviceId: string; appId: string; sessionId: string };
@@ -103,6 +104,54 @@ export default new (class extends TypedEventTarget<EventMap> {
         });
     }
 
+    /** Pending YouTube queue requests, one per device. */
+    private youtubeQueueRequests = new Map<
+        string,
+        { resolve: () => void; reject: (err: Error) => void }
+    >();
+
+    /**
+     * Sends a YouTube app queue command (Lounge API, via the bridge) and
+     * resolves once the bridge confirms it.
+     */
+    youtubeQueueCommand(
+        deviceId: string,
+        action: "add" | "playNext" | "remove",
+        videoId: string,
+        title: string
+    ): Promise<void> {
+        const device = this.receiverDevices.get(deviceId);
+        if (!this.bridgePort || !device) {
+            return Promise.reject(new Error("Device is not available"));
+        }
+
+        return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                this.youtubeQueueRequests.delete(deviceId);
+                reject(new Error("YouTube didn't respond in time"));
+            }, 45000);
+
+            this.youtubeQueueRequests.get(deviceId)?.reject(
+                new Error("Replaced by a newer request")
+            );
+            this.youtubeQueueRequests.set(deviceId, {
+                resolve: () => {
+                    clearTimeout(timeoutId);
+                    resolve();
+                },
+                reject: err => {
+                    clearTimeout(timeoutId);
+                    reject(err);
+                }
+            });
+
+            this.bridgePort?.postMessage({
+                subject: "bridge:youtubeQueue",
+                data: { deviceId, host: device.host, action, videoId, title }
+            });
+        });
+    }
+
     /** Sends an NS_MEDIA message to a given device. */
     sendMediaMessage(deviceId: string, message: SenderMediaMessage) {
         if (!this.bridgePort) {
@@ -162,6 +211,29 @@ export default new (class extends TypedEventTarget<EventMap> {
                 break;
             }
 
+            case "main:youtubeQueueUpdated": {
+                const { deviceId, items } = message.data;
+                const device = this.receiverDevices.get(deviceId);
+                if (device) device.youtubeQueue = items;
+
+                this.youtubeQueueRequests.get(deviceId)?.resolve();
+                this.youtubeQueueRequests.delete(deviceId);
+                this.dispatchEvent(
+                    new CustomEvent("youtubeQueueUpdated", {
+                        detail: { deviceId }
+                    })
+                );
+                break;
+            }
+            case "main:youtubeQueueError": {
+                const { deviceId, message: errorMessage } = message.data;
+                this.youtubeQueueRequests
+                    .get(deviceId)
+                    ?.reject(new Error(errorMessage));
+                this.youtubeQueueRequests.delete(deviceId);
+                break;
+            }
+
             case "main:receiverDeviceStatusUpdated": {
                 const { deviceId, status } = message.data;
                 const device = this.receiverDevices.get(deviceId);
@@ -179,6 +251,7 @@ export default new (class extends TypedEventTarget<EventMap> {
                     application.transportId !== oldApplication.transportId
                 ) {
                     delete device.mediaStatus;
+                    delete device.youtubeQueue;
                 }
 
                 if (!application || application.isIdleScreen) {

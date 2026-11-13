@@ -36,6 +36,12 @@ interface ReceiverSelectorEvents {
     receiverMessage: ReceiverSelectorReceiverMessage;
     mediaMessage: ReceiverSelectorMediaMessage;
     queue: { device: ReceiverDevice };
+    youtubeQueue: {
+        device: ReceiverDevice;
+        action: "add" | "playNext" | "remove";
+        videoId?: string;
+        title?: string;
+    };
 }
 
 /**
@@ -245,6 +251,12 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
                 this.wasReceiverSelected = true;
                 this.dispatchEvent(
                     new CustomEvent("selected", { detail: message.data })
+                );
+                break;
+
+            case "main:youtubeQueueSelected":
+                this.dispatchEvent(
+                    new CustomEvent("youtubeQueue", { detail: message.data })
                 );
                 break;
 

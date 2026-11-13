@@ -19,6 +19,8 @@ export interface ReceiverDevice {
     port: number;
     status?: ReceiverStatus;
     mediaStatus?: MediaStatus;
+    /** Videos fx_cast queued on the YouTube app (its queue is unreadable). */
+    youtubeQueue?: { videoId: string; title: string }[];
 }
 
 export enum ReceiverSelectorMediaType {

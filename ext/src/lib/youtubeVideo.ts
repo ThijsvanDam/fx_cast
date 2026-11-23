@@ -32,12 +32,15 @@ export function cleanYouTubeTitle(title?: string): string {
     return cleaned || "YouTube video";
 }
 
-/**
- * Cast app IDs of the YouTube receiver. Some TVs (e.g. Google TV)
- * run YouTube as 2C6A6E3D; both speak the Lounge API.
- */
-export const YOUTUBE_APP_IDS = ["233637DE", "2C6A6E3D"];
+/** YouTube's remote-control (Lounge) channel on a Cast receiver app. */
+export const YOUTUBE_MDX_NAMESPACE = "urn:x-cast:com.google.youtube.mdx";
 
-export function isYouTubeAppId(appId?: string): boolean {
-    return !!appId && YOUTUBE_APP_IDS.includes(appId);
+/**
+ * Whether a receiver app is YouTube. Matched by its remote-control
+ * channel, not its ID: the TV runs YouTube under different app IDs.
+ */
+export function isYouTubeApp(app?: {
+    namespaces?: Array<{ name: string }>;
+}): boolean {
+    return !!app?.namespaces?.some(ns => ns.name === YOUTUBE_MDX_NAMESPACE);
 }

@@ -121,8 +121,6 @@ export type PostFn = (
     body: Record<string, string>
 ) => Promise<{ status: number; text: string }>;
 
-/** YouTube receiver app IDs (2C6A6E3D on e.g. Google TV). */
-const YOUTUBE_APP_IDS = ["233637DE", "2C6A6E3D"];
 const MDX_NAMESPACE = "urn:x-cast:com.google.youtube.mdx";
 const LOUNGE_BASE = "https://www.youtube.com/api/lounge";
 const LOUNGE_TOKEN_HEADER = "X-YouTube-LoungeId-Token";
@@ -205,7 +203,11 @@ export async function castScreenId(host: string): Promise<string> {
 
             receiver.once("message", (message: any) => {
                 const app = message.status?.applications?.[0];
-                if (!YOUTUBE_APP_IDS.includes(app?.appId)) {
+                // Match by channel, not app ID: TVs run YouTube under several IDs
+                const isYouTube = app?.namespaces?.some(
+                    (ns: { name: string }) => ns.name === MDX_NAMESPACE
+                );
+                if (!isYouTube) {
                     finish(() =>
                         reject(new Error("YouTube isn't running on this device"))
                     );

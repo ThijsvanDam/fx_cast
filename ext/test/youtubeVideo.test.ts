@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { getYouTubeVideoId, cleanYouTubeTitle, isYouTubeAppId } from "../src/lib/youtubeVideo.ts";
+import { getYouTubeVideoId, cleanYouTubeTitle, isYouTubeApp } from "../src/lib/youtubeVideo.ts";
 
 test("video id from watch, shorts and short links", () => {
     assert.equal(getYouTubeVideoId("https://www.youtube.com/watch?v=abc123&list=x"), "abc123");
@@ -26,9 +26,16 @@ test("cleans tab titles", () => {
     assert.equal(cleanYouTubeTitle(undefined), "YouTube video");
 });
 
-test("both YouTube receiver apps count as YouTube", () => {
-    assert.equal(isYouTubeAppId("233637DE"), true);
-    assert.equal(isYouTubeAppId("2C6A6E3D"), true);
-    assert.equal(isYouTubeAppId("CC1AD845"), false);
-    assert.equal(isYouTubeAppId(undefined), false);
+test("an app with YouTube's remote-control channel counts as YouTube, whatever its ID", () => {
+    const app = (appId: string, ...names: string[]) => ({
+        appId,
+        namespaces: names.map(name => ({ name }))
+    });
+    const MDX = "urn:x-cast:com.google.youtube.mdx";
+    const MEDIA = "urn:x-cast:com.google.cast.media";
+
+    assert.equal(isYouTubeApp(app("233637DE", MEDIA, MDX)), true);
+    assert.equal(isYouTubeApp(app("SOMENEWID", MDX)), true);
+    assert.equal(isYouTubeApp(app("CC1AD845", MEDIA)), false);
+    assert.equal(isYouTubeApp(undefined), false);
 });

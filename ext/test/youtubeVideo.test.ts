@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { getYouTubeVideoId, cleanYouTubeTitle } from "../src/lib/youtubeVideo.ts";
+import { getYouTubeVideoId, cleanYouTubeTitle, isYouTubeAppId } from "../src/lib/youtubeVideo.ts";
 
 test("video id from watch, shorts and short links", () => {
     assert.equal(getYouTubeVideoId("https://www.youtube.com/watch?v=abc123&list=x"), "abc123");
@@ -24,4 +24,11 @@ test("cleans tab titles", () => {
     assert.equal(cleanYouTubeTitle("Plain title"), "Plain title");
     assert.equal(cleanYouTubeTitle(""), "YouTube video");
     assert.equal(cleanYouTubeTitle(undefined), "YouTube video");
+});
+
+test("both YouTube receiver apps count as YouTube", () => {
+    assert.equal(isYouTubeAppId("233637DE"), true);
+    assert.equal(isYouTubeAppId("2C6A6E3D"), true);
+    assert.equal(isYouTubeAppId("CC1AD845"), false);
+    assert.equal(isYouTubeAppId(undefined), false);
 });

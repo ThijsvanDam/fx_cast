@@ -31,3 +31,13 @@ export function cleanYouTubeTitle(title?: string): string {
         .trim();
     return cleaned || "YouTube video";
 }
+
+/**
+ * Cast app IDs of the YouTube receiver. Some TVs (e.g. Google TV)
+ * run YouTube as 2C6A6E3D; both speak the Lounge API.
+ */
+export const YOUTUBE_APP_IDS = ["233637DE", "2C6A6E3D"];
+
+export function isYouTubeAppId(appId?: string): boolean {
+    return !!appId && YOUTUBE_APP_IDS.includes(appId);
+}

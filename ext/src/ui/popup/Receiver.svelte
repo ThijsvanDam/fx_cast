@@ -18,6 +18,7 @@
 
     import LoadingIndicator from "../LoadingIndicator.svelte";
     import { canQueueAudio, getUpNext } from "../../lib/audioQueue";
+    import { isYouTubeAppId } from "../../lib/youtubeVideo";
     import ReceiverMedia from "./ReceiverMedia.svelte";
 
     const _ = browser.i18n.getMessage;
@@ -59,7 +60,7 @@
     $: isBusy = !!application && !application.isIdleScreen;
     $: isPlaying = device.mediaStatus?.playerState === "PLAYING";
     /** Receiver runs the YouTube app (queue via the Lounge API). */
-    $: isYouTubeApp = application?.appId === "233637DE";
+    $: isYouTubeApp = isYouTubeAppId(application?.appId);
     $: showYouTubeQueueActions = isBusy && isYouTubeApp && canQueueYouTube;
     $: youtubeQueue = isYouTubeApp ? device.youtubeQueue ?? [] : [];
     /** Title of the media currently playing (if known). */

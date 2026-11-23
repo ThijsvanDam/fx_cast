@@ -108,6 +108,10 @@ export class YouTubeAdWatcher {
                 while (!this.isStopped) await this.poll();
             } catch (err) {
                 if (this.isStopped) break;
+                console.error(
+                    "YouTube ad watcher:",
+                    err instanceof Error ? err.message : err
+                );
                 this.session = undefined;
                 refreshToken = err instanceof AuthError;
 

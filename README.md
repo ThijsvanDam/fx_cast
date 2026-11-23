@@ -5,6 +5,8 @@
 
 # fx_cast
 
+> **This is the cosy fork** (Zen, YouTube audio-only, TV queue, ad skipping). See [COSY.md](COSY.md) for what it adds and how it works.
+
 A Firefox extension that implements the Chromecast API and exposes it to web apps to enable cast support. Communication with receiver devices is handled by a companion application (bridge).
 
 ## Installing

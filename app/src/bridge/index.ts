@@ -6,10 +6,52 @@ import Remote from "./components/cast/remote";
 
 import { startMediaServer, stopMediaServer } from "./components/mediaServer";
 import { resolveYouTubeAudio } from "./components/youtube";
-import { YouTubeLounge } from "./components/youtube/lounge";
+import { MDX_NAMESPACE, YouTubeLounge } from "./components/youtube/lounge";
+import { YouTubeAdWatcher } from "./components/youtube/adWatcher";
+import type { ReceiverStatus } from "./components/cast/types";
 
 /** Remembers fx_cast's YouTube queue additions for this bridge's life. */
 const youtubeLounge = new YouTubeLounge();
+
+/** Ad watchers for devices running the YouTube app. */
+const adWatchers = new Map<string, YouTubeAdWatcher>();
+let shouldAutoSkipAds = true;
+
+/** Starts/stops a device's ad watcher as YouTube opens/closes on it. */
+function updateAdWatcher(
+    deviceId: string,
+    host: string,
+    status: ReceiverStatus
+) {
+    const application = status.applications?.[0];
+    // Matched by channel, not app ID: TVs run YouTube under several IDs
+    const isYouTube = !!application?.namespaces?.some(
+        ns => ns.name === MDX_NAMESPACE
+    );
+    const watcher = adWatchers.get(deviceId);
+
+    if (isYouTube && !watcher) {
+        const newWatcher = new YouTubeAdWatcher(host, {
+            getToken: (host, refresh) =>
+                youtubeLounge.loungeTokenFor(host, refresh),
+            onAd: ad =>
+                messaging.sendMessage({
+                    subject: "main:youtubeAdUpdated",
+                    data: { deviceId, ad }
+                }),
+            autoSkip: shouldAutoSkipAds
+        });
+        adWatchers.set(deviceId, newWatcher);
+        newWatcher.start();
+    } else if (!isYouTube && watcher) {
+        stopAdWatcher(deviceId);
+    }
+}
+
+function stopAdWatcher(deviceId: string) {
+    adWatchers.get(deviceId)?.stop();
+    adWatchers.delete(deviceId);
+}
 
 import { applicationVersion } from "../../config.json";
 
@@ -57,6 +99,11 @@ messaging.on("message", (message: Message) => {
                             new Remote(device.host, {
                                 // RECEIVER_STATUS
                                 onReceiverStatusUpdate(status) {
+                                    updateAdWatcher(
+                                        device.id,
+                                        device.host,
+                                        status
+                                    );
                                     messaging.sendMessage({
                                         subject:
                                             "main:receiverDeviceStatusUpdated",
@@ -105,6 +152,7 @@ messaging.on("message", (message: Message) => {
                     });
 
                     if (shouldWatchStatus) {
+                        stopAdWatcher(deviceId);
                         if (remotes.has(deviceId)) {
                             remotes.get(deviceId)?.disconnect();
                             remotes.delete(deviceId);
@@ -156,6 +204,21 @@ messaging.on("message", (message: Message) => {
                         data: { deviceId, message: err.message }
                     });
                 });
+            break;
+        }
+
+        case "bridge:youtubeSkipAd": {
+            adWatchers
+                .get(message.data.deviceId)
+                ?.skip()
+                .catch(err => console.error("YouTube skip failed:", err));
+            break;
+        }
+        case "bridge:setYouTubeAutoSkip": {
+            shouldAutoSkipAds = message.data.enabled;
+            for (const watcher of adWatchers.values()) {
+                watcher.autoSkip = shouldAutoSkipAds;
+            }
             break;
         }
 

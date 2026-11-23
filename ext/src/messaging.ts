@@ -67,6 +67,8 @@ type ExtMessageDefinitions = {
         videoId?: string;
         title?: string;
     };
+    /** Popup asked to skip the ad playing on a device's YouTube app. */
+    "main:youtubeSkipAdSelected": { deviceId: string };
     /** Shows an error message in the selector popup. */
     "popup:error": string;
 
@@ -341,6 +343,22 @@ type AppMessageDefinitions = {
         items: { videoId: string; title: string }[];
     };
     "main:youtubeQueueError": { deviceId: string; message: string };
+
+    /** Ad state of the YouTube app on a device (null: no ad playing). */
+    "main:youtubeAdUpdated": {
+        deviceId: string;
+        ad: {
+            adVideoId: string;
+            duration: number;
+            endsAt: number;
+            isSkippable: boolean;
+            isSkipEnabled: boolean;
+        } | null;
+    };
+    /** Skip the ad playing in the YouTube app on a device. */
+    "bridge:youtubeSkipAd": { deviceId: string };
+    /** Skip YouTube ads automatically once they're skippable. */
+    "bridge:setYouTubeAutoSkip": { enabled: boolean };
 };
 
 type MessageDefinitions = ExtMessageDefinitions & AppMessageDefinitions;

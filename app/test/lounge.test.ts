@@ -166,3 +166,26 @@ test("a bind without a queue starts a fresh fx_cast list", async () => {
     // Then
     assert.deepEqual(items, [{ videoId: VIDEO_ID, title: TITLE }]);
 });
+
+test("loungeTokenFor caches the screen ID per host; refresh asks the device again", async () => {
+    // Given
+    const { post } = happyPost();
+    const screenLookups: string[] = [];
+    const lounge = new YouTubeLounge({
+        post,
+        getScreenId: async host => {
+            screenLookups.push(host);
+            return SCREEN_ID;
+        }
+    });
+
+    // When
+    const first = await lounge.loungeTokenFor(HOST);
+    const cached = await lounge.loungeTokenFor(HOST);
+    await lounge.loungeTokenFor(HOST, true);
+
+    // Then
+    assert.equal(first, LOUNGE_TOKEN);
+    assert.equal(cached, LOUNGE_TOKEN);
+    assert.deepEqual(screenLookups, [HOST, HOST]);
+});

@@ -121,9 +121,9 @@ export type PostFn = (
     body: Record<string, string>
 ) => Promise<{ status: number; text: string }>;
 
-const MDX_NAMESPACE = "urn:x-cast:com.google.youtube.mdx";
-const LOUNGE_BASE = "https://www.youtube.com/api/lounge";
-const LOUNGE_TOKEN_HEADER = "X-YouTube-LoungeId-Token";
+export const MDX_NAMESPACE = "urn:x-cast:com.google.youtube.mdx";
+export const LOUNGE_BASE = "https://www.youtube.com/api/lounge";
+export const LOUNGE_TOKEN_HEADER = "X-YouTube-LoungeId-Token";
 /** Used when YouTube doesn't say when a token expires. */
 const DEFAULT_TOKEN_LIFETIME_MS = 5 * 60 * 1000;
 
@@ -326,6 +326,23 @@ export class YouTubeLounge {
         return listId;
     }
 
+    private screenIds = new Map<string, string>();
+
+    /**
+     * Lounge token for the YouTube app on a device. The screen ID is
+     * cached per host; `refresh` re-asks the device and YouTube (after
+     * YouTube restarted or rejected the token).
+     */
+    async loungeTokenFor(host: string, refresh = false): Promise<string> {
+        let screenId = refresh ? undefined : this.screenIds.get(host);
+        if (!screenId) {
+            screenId = await this.getScreenId(host);
+            this.screenIds.set(host, screenId);
+        }
+        if (refresh) this.tokens.delete(screenId);
+        return this.getLoungeToken(screenId);
+    }
+
     /** What fx_cast has queued on a device (YouTube's queue is unreadable). */
     getQueue(deviceId: string) {
         return this.memory.get(deviceId);
@@ -370,9 +387,9 @@ export class YouTubeLounge {
 }
 
 /** YouTube refused the lounge token (expired or revoked). */
-class AuthError extends Error {}
+export class AuthError extends Error {}
 
-function rejected(status: number) {
+export function rejected(status: number) {
     const message = `YouTube rejected the request (HTTP ${status})`;
     return [401, 403, 410].includes(status)
         ? new AuthError(message)

@@ -61,6 +61,9 @@ export interface Options {
     /** Show media images in receiver selector. */
     receiverSelectorShowMediaImages: boolean;
 
+    /** Skip YouTube ads on Cast devices as soon as they're skippable. */
+    youtubeAutoSkipAds: boolean;
+
     /** User agent replacement whitelist enabled. */
     siteWhitelistEnabled: boolean;
     /** User agent replacement whitelist items data. */
@@ -100,6 +103,7 @@ export default {
     receiverSelectorWaitForConnection: true,
     receiverSelectorExpandActive: true,
     receiverSelectorShowMediaImages: false,
+    youtubeAutoSkipAds: true,
 
     siteWhitelistEnabled: true,
     siteWhitelist: [{ pattern: "https://www.netflix.com/*", isEnabled: true }],

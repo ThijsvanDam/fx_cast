@@ -400,6 +400,19 @@
                 <div class="option option--inline">
                     <div class="option__control">
                         <input
+                            id="youtubeAutoSkipAds"
+                            type="checkbox"
+                            bind:checked={opts.youtubeAutoSkipAds}
+                        />
+                    </div>
+                    <label class="option__label" for="youtubeAutoSkipAds">
+                        {_("optionsYouTubeAutoSkipAds")}
+                    </label>
+                </div>
+
+                <div class="option option--inline">
+                    <div class="option__control">
+                        <input
                             id="receiverSelectorCloseIfFocusLost"
                             type="checkbox"
                             bind:checked={opts.receiverSelectorCloseIfFocusLost}

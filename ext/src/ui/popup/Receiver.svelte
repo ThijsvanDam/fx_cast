@@ -63,6 +63,36 @@
     $: isYouTubeApp = isYouTubeReceiverApp(application);
     $: showYouTubeQueueActions = isBusy && isYouTubeApp && canQueueYouTube;
     $: youtubeQueue = isYouTubeApp ? device.youtubeQueue ?? [] : [];
+
+    /** Ad playing in the YouTube app (if any). */
+    $: youtubeAd = isYouTubeApp ? device.youtubeAd : undefined;
+    /** Ticks every second for the ad countdown. */
+    let now = Date.now();
+    onMount(() => {
+        const intervalId = setInterval(() => (now = Date.now()), 1000);
+        return () => clearInterval(intervalId);
+    });
+    $: adTimeLeft = youtubeAd ? formatTimeLeft(youtubeAd.endsAt - now) : "";
+    $: adNote =
+        !youtubeAd || youtubeAd.isSkipEnabled
+            ? ""
+            : !youtubeAd.isSkippable
+            ? _("popupAdCantSkip")
+            : opts?.youtubeAutoSkipAds !== false
+            ? _("popupAdAutoSkipSoon")
+            : _("popupAdSkippableSoon");
+
+    function formatTimeLeft(ms: number) {
+        const seconds = Math.max(0, Math.ceil(ms / 1000));
+        return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+    }
+
+    function skipYouTubeAd() {
+        port?.postMessage({
+            subject: "main:youtubeSkipAdSelected",
+            data: { deviceId: device.id }
+        });
+    }
     /** Title of the media currently playing (if known). */
     $: mediaTitle = device.mediaStatus?.media?.metadata?.title;
     /** Upcoming queue items (Default Media Receiver only). */
@@ -472,6 +502,24 @@
                         application.statusText ||
                         application.displayName}
                 </span>
+            </div>
+        {/if}
+        {#if youtubeAd}
+            <div class="receiver__ad">
+                <span class="receiver__ad-text">
+                    {_("popupAdPlaying", adTimeLeft)}{adNote ? ` · ${adNote}` : ""}
+                </span>
+                {#if youtubeAd.isSkippable}
+                    <button
+                        type="button"
+                        class="receiver__ad-skip"
+                        disabled={!youtubeAd.isSkipEnabled}
+                        on:click={skipYouTubeAd}
+                    >
+                        <img src="icons/next.svg" alt="" width="14" height="14" />
+                        {_("popupSkipAdButtonTitle")}
+                    </button>
+                {/if}
             </div>
         {/if}
     </div>

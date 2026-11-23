@@ -59,6 +59,30 @@
         "message": "Up next",
         "description": "Heading of the receiver's upcoming queue items."
     },
+    "popupAdPlaying": {
+        "message": "Ad · $1 left",
+        "description": "Receiver status line while a YouTube ad plays. $1 is the time left, e.g. 0:14."
+    },
+    "popupAdCantSkip": {
+        "message": "can't skip",
+        "description": "Suffix on the ad status line for an ad that can't be skipped."
+    },
+    "popupAdSkippableSoon": {
+        "message": "skippable soon",
+        "description": "Suffix on the ad status line for an ad that can be skipped shortly."
+    },
+    "popupAdAutoSkipSoon": {
+        "message": "skipping when allowed",
+        "description": "Suffix on the ad status line when auto-skip will skip the ad shortly."
+    },
+    "popupSkipAdButtonTitle": {
+        "message": "Skip ad",
+        "description": "Button that skips the YouTube ad playing on a receiver."
+    },
+    "optionsYouTubeAutoSkipAds": {
+        "message": "Skip YouTube ads on your TV as soon as they can be skipped",
+        "description": "Options checkbox label for auto-skipping YouTube ads."
+    },
     "popupQueueRemove": {
         "message": "Remove from queue",
         "description": "Button title/label for removing an item from the receiver's queue."

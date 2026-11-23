@@ -21,6 +21,20 @@ export interface ReceiverDevice {
     mediaStatus?: MediaStatus;
     /** Videos fx_cast queued on the YouTube app (its queue is unreadable). */
     youtubeQueue?: { videoId: string; title: string }[];
+    /** Ad playing in the YouTube app (reported by the bridge). */
+    youtubeAd?: YouTubeAd;
+}
+
+export interface YouTubeAd {
+    adVideoId: string;
+    /** Seconds. */
+    duration: number;
+    /** When the ad should end (ms since epoch). */
+    endsAt: number;
+    /** The ad will let you skip it at some point. */
+    isSkippable: boolean;
+    /** Skipping is allowed right now. */
+    isSkipEnabled: boolean;
 }
 
 export enum ReceiverSelectorMediaType {

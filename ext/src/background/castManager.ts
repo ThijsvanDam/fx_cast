@@ -1260,6 +1260,10 @@ function createSelector() {
     };
     selector.addEventListener("youtubeQueue", onYouTubeQueue);
 
+    const onYouTubeSkipAd = (ev: CustomEvent<{ deviceId: string }>) =>
+        deviceManager.skipYouTubeAd(ev.detail.deviceId);
+    selector.addEventListener("youtubeSkipAd", onYouTubeSkipAd);
+
     // Update selector data whenever devices change/update
     const onDeviceChange = () => {
         const connectedSessionIds: string[] = [];
@@ -1281,6 +1285,7 @@ function createSelector() {
     deviceManager.addEventListener("deviceUpdated", onDeviceChange);
     deviceManager.addEventListener("deviceMediaUpdated", onDeviceChange);
     deviceManager.addEventListener("youtubeQueueUpdated", onDeviceChange);
+    deviceManager.addEventListener("youtubeAdUpdated", onDeviceChange);
 
     // Cleanup listeners
     selector.addEventListener(
@@ -1299,6 +1304,11 @@ function createSelector() {
             selector.removeEventListener("mediaMessage", onMediaMessage);
             selector.removeEventListener("queue", onQueue);
             selector.removeEventListener("youtubeQueue", onYouTubeQueue);
+            selector.removeEventListener("youtubeSkipAd", onYouTubeSkipAd);
+            deviceManager.removeEventListener(
+                "youtubeAdUpdated",
+                onDeviceChange
+            );
             deviceManager.removeEventListener(
                 "youtubeQueueUpdated",
                 onDeviceChange

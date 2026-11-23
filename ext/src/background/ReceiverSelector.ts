@@ -42,6 +42,7 @@ interface ReceiverSelectorEvents {
         videoId?: string;
         title?: string;
     };
+    youtubeSkipAd: { deviceId: string };
 }
 
 /**
@@ -251,6 +252,12 @@ export default class ReceiverSelector extends TypedEventTarget<ReceiverSelectorE
                 this.wasReceiverSelected = true;
                 this.dispatchEvent(
                     new CustomEvent("selected", { detail: message.data })
+                );
+                break;
+
+            case "main:youtubeSkipAdSelected":
+                this.dispatchEvent(
+                    new CustomEvent("youtubeSkipAd", { detail: message.data })
                 );
                 break;
 

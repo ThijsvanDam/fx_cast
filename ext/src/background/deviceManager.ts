@@ -1,5 +1,7 @@
 import bridge, { BridgeInfo } from "../lib/bridge";
 import logger from "../lib/logger";
+import options from "../lib/options";
+import type { Options } from "../lib/options";
 import { TypedEventTarget } from "../lib/TypedEventTarget";
 
 import type { Message, Port } from "../messaging";
@@ -21,6 +23,7 @@ interface EventMap {
     deviceUpdated: { deviceId: string; status: ReceiverStatus };
     deviceMediaUpdated: { deviceId: string; status: MediaStatus };
     youtubeQueueUpdated: { deviceId: string };
+    youtubeAdUpdated: { deviceId: string };
 
     applicationFound: { deviceId: string; appId: string };
     applicationClosed: { deviceId: string; appId: string; sessionId: string };
@@ -65,7 +68,36 @@ export default new (class extends TypedEventTarget<EventMap> {
                     shouldWatchStatus: true
                 }
             });
+            await this.sendAutoSkipOption();
         }
+    }
+
+    /** Tells the bridge whether to skip YouTube ads automatically. */
+    private async sendAutoSkipOption() {
+        const enabled = (await options.get("youtubeAutoSkipAds")) !== false;
+        this.bridgePort?.postMessage({
+            subject: "bridge:setYouTubeAutoSkip",
+            data: { enabled }
+        });
+    }
+
+    private onOptionsChanged = (ev: CustomEvent<Array<keyof Options>>) => {
+        if (ev.detail.includes("youtubeAutoSkipAds")) {
+            this.sendAutoSkipOption();
+        }
+    };
+
+    constructor() {
+        super();
+        options.addEventListener("changed", this.onOptionsChanged);
+    }
+
+    /** Skips the ad playing in the YouTube app on a device. */
+    skipYouTubeAd(deviceId: string) {
+        this.bridgePort?.postMessage({
+            subject: "bridge:youtubeSkipAd",
+            data: { deviceId }
+        });
     }
 
     getBridgeInfo() {
@@ -236,6 +268,21 @@ export default new (class extends TypedEventTarget<EventMap> {
                 );
                 break;
             }
+            case "main:youtubeAdUpdated": {
+                const { deviceId, ad } = message.data;
+                const device = this.receiverDevices.get(deviceId);
+                if (!device) break;
+
+                if (ad) device.youtubeAd = ad;
+                else delete device.youtubeAd;
+
+                this.dispatchEvent(
+                    new CustomEvent("youtubeAdUpdated", {
+                        detail: { deviceId }
+                    })
+                );
+                break;
+            }
             case "main:youtubeQueueError": {
                 const { deviceId, message: errorMessage } = message.data;
                 this.youtubeQueueRequests
@@ -263,6 +310,7 @@ export default new (class extends TypedEventTarget<EventMap> {
                 ) {
                     delete device.mediaStatus;
                     delete device.youtubeQueue;
+                    delete device.youtubeAd;
                 }
 
                 if (!application || application.isIdleScreen) {
